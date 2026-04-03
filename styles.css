@@ -1,0 +1,77 @@
+/* ==============================
+   TYPOGRAPHY
+   ============================== */
+
+/* Body text */
+body {
+  font-family: "Arial Narrow", Arial, sans-serif;
+}
+
+/* Headings and main title */
+h1, h2, h3, h4, h5, h6,
+.quarto-title-block .title,
+.title {
+  font-family: "Copperplate Gothic Bold", "Copperplate Gothic", Copperplate, serif;
+  font-weight: 700;
+  color: #ff00b8; /* Fuchsia pink */
+}
+
+/* ==============================
+   TABLE OF CONTENTS
+   ============================== */
+
+/* TOC title */
+nav#TOC > h2,
+#TOC > h2 {
+  font-family: "Copperplate Gothic Bold", "Copperplate Gothic", Copperplate, serif;
+  color: #ff00b8;
+}
+
+/* TOC links */
+nav#TOC a,
+#TOC a {
+  font-family: "Arial Narrow", Arial, sans-serif;
+  color: #444;
+  text-decoration: none;
+}
+
+/* Active TOC item highlight */
+nav#TOC a.active,
+#TOC a.active {
+  color: #ff00b8 !important;
+  font-weight: 700;
+}
+
+/* Baby icon before TOC items */
+nav#TOC ul li a::before,
+#TOC ul li a::before {
+  content: "👶 ";
+  margin-right: 0.2rem;
+}
+
+/* ==============================
+   LAYOUT
+   ============================== */
+
+/* Push main content slightly right */
+main.content,
+#quarto-document-content {
+  padding-left: 1.25rem;
+}
+
+/* ==============================
+   LINKS & CAPTIONS
+   ============================== */
+
+a, a:visited {
+  color: #ff00b8;
+}
+a:hover {
+  color: #b0007d;
+}
+
+.figure-caption, figcaption {
+  font-family: "Arial Narrow", Arial, sans-serif;
+  color: #444;
+  font-style: italic;
+}
