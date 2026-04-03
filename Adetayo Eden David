@@ -14,11 +14,11 @@ jupyter: python3
 ---
 
 
-## Global challenge (why this matters)
+## Global Challenge (why this matters)
 
 Across the world, mothers do not have the same chance of receiving essential care after birth. The first 48 hours are a high‑risk window for complications, yet access to postnatal care remains uneven across countries. This inequality is not only a maternal health issue — it reflects broader health system capacity and can be linked to long‑term population health outcomes.
 
-## What this report examines
+## What This Report Examines
 
 This report uses UNICEF postnatal care indicator data and country‑level metadata to answer two questions:
 
@@ -237,7 +237,7 @@ If a country has stronger health system access overall, we might expect both hig
 
 ---
 
-## Visualisation 1 (required) - World map: latest postnatal care (%)
+Global Distribution of Latest Postnatal Care (%)
 
 ```{python}
 #| label: fig-world-map
@@ -252,7 +252,11 @@ map_df = poly.merge(care_latest_pd[['iso_a3','postnatal_care_pct']], on='iso_a3'
 (
     ggplot(map_df, aes('long', 'lat', group='group', fill='postnatal_care_pct'))
     + geom_polygon(color='white', size=0.1)
-    + scale_fill_cmap(name='Postnatal care (%)', cmap_name='viridis')
+  + scale_fill_gradient(
+    name='Postnatal care (%)',
+    low='#fde0ef',
+    high='#ad1457'
+)
     + labs(
         title='Postnatal care within 2 days of birth (latest available)',
         subtitle='Countries without data appear in grey',
@@ -263,7 +267,7 @@ map_df = poly.merge(care_latest_pd[['iso_a3','postnatal_care_pct']], on='iso_a3'
 )
 ```
 
-## Visualisation 2 (required) - Bar chart: lowest postnatal care countries
+Lowest Postnatal Care Coverage Countries
 
 ```{python}
 #| label: fig-bar-bottom
@@ -275,7 +279,7 @@ bottom15_pd = bottom15.with_columns(pl.col('latest_value').round(1)).to_pandas()
 
 (
     ggplot(bottom15_pd, aes('reorder(country, latest_value)', 'latest_value'))
-    + geom_col(fill='#2c7fb8')
+    + geom_col(fill='#ec407a', color='#6d214f')
     + coord_flip()
     + labs(
         title='Lowest postnatal care coverage (latest year per country)',
@@ -287,7 +291,7 @@ bottom15_pd = bottom15.with_columns(pl.col('latest_value').round(1)).to_pandas()
 )
 ```
 
-## Visualisation 3 (required) - Scatterplot with regression: postnatal care vs life expectancy
+The Relationship Between Postnatal care vs Life Expectancy
 
 ```{python}
 #| label: fig-scatter-reg
@@ -299,8 +303,8 @@ scatter = joined.select(['country','postnatal_care_pct','life_expectancy_years']
 
 (
     ggplot(scatter, aes('postnatal_care_pct', 'life_expectancy_years'))
-    + geom_point(alpha=0.65, color='#f03b20')
-    + geom_smooth(method='lm', se=True, color='black')
+    + geom_point(alpha=0.65, color='#d63384')
+    + geom_smooth(method='lm', se=True, color='#6d214f')
     + labs(
         title='Postnatal care and life expectancy move together in many countries',
         subtitle='Life expectancy is taken from metadata in the same year as the latest postnatal care value',
@@ -312,7 +316,7 @@ scatter = joined.select(['country','postnatal_care_pct','life_expectancy_years']
 )
 ```
 
-## Visualisation 4 (required) - Time-series: postnatal care over time
+Postnatal Care Coverage Over Time
 
 ```{python}
 #| label: fig-time-series
@@ -325,6 +329,7 @@ care_ts_pd = care_ts.to_pandas()
 (
     ggplot(care_ts_pd, aes('year', 'postnatal_care_pct', color='country'))
     + geom_line(size=1)
+    + scale_color_brewer(palette='RdPu')
     + labs(
         title='Postnatal care trends over time (selected countries)',
         subtitle='Countries selected programmatically by longest available time-series',
@@ -337,11 +342,11 @@ care_ts_pd = care_ts.to_pandas()
 )
 ```
 
-## Call to action
+## Call to Action
 
 Improving postnatal care within the first 48 hours after birth is one of the most practical ways to strengthen maternal health systems. The pattern in this report suggests that countries with higher postnatal care coverage also tend to achieve better life expectancy outcomes. Policymakers and partners should prioritise frontline services: staffing for immediate post-delivery follow-up, removing cost and travel barriers, and integrating postnatal check-ups into routine maternal care. Targeting the lowest-coverage countries identified here is a clear opportunity to improve health outcomes at scale.
 
-## Limitations and next steps
+## Limitations and Next Steps
 
 - National averages can hide sub-national inequalities.
 - The charts show association, not causation.
