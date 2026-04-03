@@ -1,6 +1,5 @@
 ---
 title: "Postnatal Care and Life Expectancy: A Global UNICEF Perspective"
-*An exploratory data story using UNICEF indicators to examine global inequalities in postnatal care and population health outcomes.*
 author: "Adetayo Eden David"
 format:
   html:
@@ -10,6 +9,7 @@ format:
     number-sections: false
     embed-resources: true
 ---
+*An exploratory data story using UNICEF indicators to examine global inequalities in postnatal care and population health outcomes.*
 jupyter: python3
 ---
 
@@ -45,8 +45,11 @@ import pandas as pd
 
 # Required plotting library
 from plotnine import (
-    ggplot, aes, geom_col, geom_point, geom_smooth, geom_line, geom_polygon,
-    scale_fill_cmap, labs, theme_minimal, theme, element_text, coord_flip
+    ggplot, aes,
+    geom_polygon, geom_col, geom_point, geom_line, geom_smooth,
+    labs, theme_minimal, theme, element_text,
+    scale_fill_gradient, scale_color_brewer,
+    coord_flip
 )
 
 # For the world map polygon base layer
