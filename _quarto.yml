@@ -1,3 +1,11 @@
+format:
+  html:
+    theme: pulse
+    toc: true
+    toc-location: left
+    code-fold: true
+    embed-resources: true
+
 project:
   type: website
   output-dir: docs
