@@ -4,7 +4,7 @@ title: "Postnatal Care and Life Expectancy: A Global UNICEF Perspective"
 author: "Adetayo Eden David"
 format:
   html:
-    theme: cosmo
+    theme: pulse
     toc: true
     toc-location: left
     number-sections: false
@@ -13,16 +13,19 @@ format:
 jupyter: python3
 ---
 
-## Context and purpose
 
-You are a data analyst at **UNICEF**. The goal of this report is to raise awareness of the public on a specific world issue using the provided datasets and **a narrative supported by visualisations**.
+## Global challenge (why this matters)
 
-This report is an **HTML report rendered by Quarto** and designed for **GitHub Pages** publication. It includes **four required plotnine visualisations**: a world map, a bar chart, a scatterplot with a linear regression line, and a time-series chart.
+Across the world, mothers do not have the same chance of receiving essential care after birth. The first 48 hours are a high‑risk window for complications, yet access to postnatal care remains uneven across countries. This inequality is not only a maternal health issue — it reflects broader health system capacity and can be linked to long‑term population health outcomes.
 
-### World issue
+## What this report examines
 
-**Unequal access to postnatal care** in the first 48 hours after birth, and how this relates to **life expectancy** as a broad measure of population health.
+This report uses UNICEF postnatal care indicator data and country‑level metadata to answer two questions:
 
+1. **How does access to postnatal care within 48 hours vary globally?**
+2. **How is postnatal care coverage associated with life expectancy at birth?**
+
+Life expectancy is not a direct outcome of postnatal care alone, but as a summary measure of population health it provides useful context for understanding how countries with stronger maternal health systems often achieve better long‑term outcomes.
 ---
 
 ```{python}
