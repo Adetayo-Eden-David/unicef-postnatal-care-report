@@ -25,7 +25,7 @@ This report uses UNICEF postnatal care indicator data and country‑level metada
 1. **How does access to postnatal care within 48 hours vary globally?**
 2. **How is postnatal care coverage associated with life expectancy at birth?**
 
-Life expectancy is not a direct outcome of postnatal care alone, but as a summary measure of population health it provides useful context for understanding how countries with stronger maternal health systems often achieve better long‑term outcomes.
+Analysis Notation: Life expectancy is not a direct outcome of postnatal care alone, but as a summary measure of population health it provides useful context for understanding how countries with stronger maternal health systems often achieve better long‑term outcomes.
 ---
 
 ```{python}
@@ -208,7 +208,7 @@ care_ts = (
 )
 ```
 
-## Headline facts (from the data)
+## Headline Facts (from the data)
 
 ```{python}
 #| label: headline-facts
@@ -224,8 +224,6 @@ display(Markdown(f"""
 - In that aligned set, life expectancy ranges from **{le_min:.1f}** to **{le_max:.1f}** years.
 """))
 ```
-
-## Story (narrative)
 
 ### Why postnatal care matters
 
@@ -291,7 +289,7 @@ bottom15_pd = bottom15.with_columns(pl.col('latest_value').round(1)).to_pandas()
 )
 ```
 
-The Relationship Between Postnatal care vs Life Expectancy
+The Relationship Between Postnatal Care vs Life Expectancy
 
 ```{python}
 #| label: fig-scatter-reg
