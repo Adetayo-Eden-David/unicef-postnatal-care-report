@@ -1,27 +1,14 @@
-format:
-  html:
-    theme: pulse
-    toc: true
-    toc-location: left
-    code-fold: true
-    embed-resources: true
-
 project:
   type: website
   output-dir: docs
-
-website:
-  title: "UNICEF Data Story: Postnatal Care & Life Expectancy"
-  navbar:
-    left:
-      - href: index.qmd
-        text: Report
+  render:
+    - index.qmd
 
 format:
   html:
-    theme: cosmo
-    toc: true
+    theme: pulse
     embed-resources: true
+    toc: true
+    toc-location: left
     code-fold: true
-    code-tools: true
     smooth-scroll: true
