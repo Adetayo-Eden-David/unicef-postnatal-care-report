@@ -1,0 +1,19 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "UNICEF Data Story: Postnatal Care & Life Expectancy"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Report
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    embed-resources: true
+    code-fold: true
+    code-tools: true
+    smooth-scroll: true
