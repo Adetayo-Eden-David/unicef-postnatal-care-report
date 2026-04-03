@@ -1,12 +1,15 @@
 ---
-title: "UNICEF Data Story: Postnatal Care and Life Expectancy"
-author: "<YOUR NAME> (BAA1030)"
+title: "Postnatal Care and Life Expectancy: A Global UNICEF Perspective"
+*An exploratory data story using UNICEF indicators to examine global inequalities in postnatal care and population health outcomes.*
+author: "Adetayo Eden David"
 format:
   html:
-    embed-resources: true
-    code-fold: true
     theme: cosmo
     toc: true
+    toc-location: left
+    number-sections: false
+    embed-resources: true
+---
 jupyter: python3
 ---
 
