@@ -90,7 +90,7 @@ nav#TOC ul li a::before,
 /* Push main content slightly right */
 main.content,
 #quarto-document-content {
-  padding-left: 2.50rem;
+  padding-left: 3rem;
 }
 /* =========================
    SITE WIDTH (EXPAND CONTENT)
@@ -169,4 +169,10 @@ figcaption {
 .quarto-figure {
   margin-left: 0 !important;
   margin-right: 0 !important;
+}
+/* Stethoscope icon styling for chart headings */
+h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
