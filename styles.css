@@ -176,3 +176,31 @@ h3 {
   align-items: center;
   gap: 0.4rem;
 }
+
+/* Collapsible Data Notes */
+details.data-notes {
+  background: #fdf2f8;
+  border-left: 4px solid #ff00b8;
+  padding: 1.1rem 1.4rem;
+  margin-top: 2.5rem;
+  border-radius: 6px;
+}
+
+details.data-notes summary {
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+details.data-notes summary::-webkit-details-marker {
+  display: none;
+}
+
+details.data-notes summary::before {
+  content: "▸ ";
+  color: #ff00b8;
+}
+
+details.data-notes[open] summary::before {
+  content: "▾ ";
+}
