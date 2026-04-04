@@ -90,7 +90,7 @@ nav#TOC ul li a::before,
 /* Push main content slightly right */
 main.content,
 #quarto-document-content {
-  padding-left: 1.75rem;
+  padding-left: 2.50rem;
 }
 /* =========================
    SITE WIDTH (EXPAND CONTENT)
@@ -99,7 +99,15 @@ main.content,
 /* Allow content to use more horizontal space */
 main.content,
 #quarto-document-content {
-  max-width: 1600px;
+  /* =========================
+   FULL-WIDTH CONTENT (NO SCROLL)
+   ========================= */
+
+main.content,
+#quarto-document-content {
+  max-width: 100%;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
 }
 
 /* ==============================
