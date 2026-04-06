@@ -345,7 +345,10 @@ h3 {
 }
 </style>
 
+
 ## 🩺 Introduction {#introduction}
+
+![Introduction image](images/intro_image.webp){width=80% fig-align="center"}
 
 Every year, millions of mothers give birth in conditions where the hours and days immediately following delivery represent the most dangerous period of their lives — and yet, for too many women around the world, this critical window passes **without any professional postnatal care**.
 
@@ -995,12 +998,6 @@ The following primary data sources were used in this analysis:
     </svg>
     <span style="font-family:'Arial Narrow',Arial,sans-serif; font-size:0.78rem; color:#CC0066; font-weight:bold;">UNICEF</span>
   </a>
-
-  <a href="https://www.who.int" target="_blank" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:0.4rem;">
-    <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="32" cy="32" r="30" fill="#005EB8"/>
-      <text x="32" y="29" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="8" fill="white">WHO</text>
-      <text x="32" y="41" text-anchor="middle"
 
 <p style="text-align:center; font-family: 'Arial Narrow', Arial, sans-serif; font-size:0.8rem; color:#aaa; margin-top:1rem;">
   Report prepared using UNICEF Postnatal Care Coverage Data (2008–2024) | Analysis conducted with Polars, Plotnine & GeoPandas |
