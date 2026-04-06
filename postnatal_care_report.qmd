@@ -1,5 +1,5 @@
 ---
-title: "Postnatal Care for Mothers: A Global Crisis Hidden in Plain Sight"
+title: "The Global Postnatal Care Challenge"
 subtitle: "A UNICEF Data Analysis Report on Maternal Postnatal Care Coverage Worldwide"
 author: "Adetayo Eden David"
 date: today
@@ -9,7 +9,7 @@ format:
     code-fold: true
     toc: true
     toc-title: "📋 Table of Contents"
-    toc-depth: 2
+    toc-depth: 4
     toc-location: left
     number-sections: false
     theme: flatly
@@ -29,6 +29,7 @@ execute:
 #| echo: false
 #| warning: false
 #| message: false
+#| include: false
 
 import polars as pl
 import pandas as pd
@@ -51,22 +52,19 @@ warnings.filterwarnings('ignore')
 #| label: load-data
 #| echo: true
 #| code-fold: true
+#| include: false
 
 # ── Load raw data ──────────────────────────────────────────────
 indicator_df = pl.read_csv("unicef_indicator_1.csv")
 metadata_df  = pl.read_csv("unicef_metadata.csv")
-
-# ── Data quality checks ────────────────────────────────────────
-print("Indicator shape:", indicator_df.shape)
-print("Metadata shape:", metadata_df.shape)
-print("\nIndicator nulls:\n", indicator_df.null_count())
-print("\nObs value range:", indicator_df["obs_value"].min(), "-", indicator_df["obs_value"].max())
 ```
 
 ```{python}
 #| label: transform-data
 #| echo: true
 #| code-fold: true
+#| include: false
+
 
 # ── Get latest postnatal value per country ─────────────────────
 latest_ind = (
@@ -107,7 +105,7 @@ latest_meta = (
 
 # ── Merge indicator + metadata ─────────────────────────────────
 merged_df = latest_ind.join(latest_meta, on="alpha_3_code", how="inner")
-print("Merged records:", merged_df.shape[0])
+
 
 # ── Time-series: global average by year ───────────────────────
 ts_df = (
@@ -395,13 +393,17 @@ The findings from each chart build toward a synthesised argument: that **targete
 ```{python}
 #| label: headline-stats
 #| echo: false
-#| output: asis
+#| output: true
+#| code-fold: true
+#| warning: false
+#| message: fals
 
-# Compute headline numbers
-vals = [float(r['obs_value']) for r in __import__('csv').DictReader(open('unicef_indicator_1.csv'))]
-latest_vals_dict = {}
+# --- Compute headline numbers --
 import csv
-with open('unicef_indicator_1.csv') as f:
+from IPython.display import display, HTML
+
+with open("unicef_indicator_1.csv") as f:
+    latest_vals_dict = {}
     for r in csv.DictReader(f):
         c = r['alpha_3_code']
         if c not in latest_vals_dict or r['time_period'] > latest_vals_dict[c][1]:
@@ -409,40 +411,48 @@ with open('unicef_indicator_1.csv') as f:
 
 latest_vals = [v[0] for v in latest_vals_dict.values()]
 n_countries = len(latest_vals)
-global_avg = sum(latest_vals)/n_countries
+global_avg = sum(latest_vals) / n_countries
 low_coverage = sum(1 for v in latest_vals if v < 50)
 high_coverage = sum(1 for v in latest_vals if v >= 90)
 
-print(f"""
-<div class="stat-grid">
-  <div class="stat-box">
-    <span class="stat-number">{n_countries}</span>
-    <div class="stat-label">Countries with postnatal care data</div>
-  </div>
-  <div class="stat-box">
-    <span class="stat-number">{global_avg:.0f}%</span>
-    <div class="stat-label">Global average coverage (latest survey per country)</div>
-  </div>
-  <div class="stat-box">
-    <span class="stat-number">{low_coverage}</span>
-    <div class="stat-label">Countries where fewer than half of mothers receive care</div>
-  </div>
-  <div class="stat-box">
-    <span class="stat-number">{high_coverage}</span>
-    <div class="stat-label">Countries with ≥90% coverage — proof that universal care is achievable</div>
-  </div>
-  <div class="stat-box">
-    <span class="stat-number">5%</span>
-    <div class="stat-label">Lowest coverage globally — Eritrea (2010 survey)</div>
-  </div>
-  <div class="stat-box">
-    <span class="stat-number">99.8%</span>
-    <div class="stat-label">Highest coverage globally — Cuba & Turkmenistan</div>
-  </div>
-</div>
-""")
-```
+html = f"""
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(185px, 1fr)); gap:1rem; margin:1.8rem 0;">
 
+  <div style="background:linear-gradient(145deg,#FFE4F0 0%,#ffffff 100%); border:2px solid #FFB3D1; border-radius:10px; padding:1.2rem 1rem; text-align:center; box-shadow:0 2px 8px rgba(204,0,102,0.12);">
+    <span style="font-family:'Copperplate Gothic Bold',serif; font-size:2.1rem; color:#CC0066; display:block; line-height:1.1;">{n_countries}</span>
+    <div style="font-family:'Arial Narrow',Arial,sans-serif; font-size:0.88rem; color:#555; margin-top:0.5rem;">Countries with postnatal care data</div>
+  </div>
+
+  <div style="background:linear-gradient(145deg,#FFE4F0 0%,#ffffff 100%); border:2px solid #FFB3D1; border-radius:10px; padding:1.2rem 1rem; text-align:center; box-shadow:0 2px 8px rgba(204,0,102,0.12);">
+    <span style="font-family:'Copperplate Gothic Bold',serif; font-size:2.1rem; color:#CC0066; display:block; line-height:1.1;">{global_avg:.0f}%</span>
+    <div style="font-family:'Arial Narrow',Arial,sans-serif; font-size:0.88rem; color:#555; margin-top:0.5rem;">Global average coverage (latest survey per country)</div>
+  </div>
+
+  <div style="background:linear-gradient(145deg,#FFE4F0 0%,#ffffff 100%); border:2px solid #FFB3D1; border-radius:10px; padding:1.2rem 1rem; text-align:center; box-shadow:0 2px 8px rgba(204,0,102,0.12);">
+    <span style="font-family:'Copperplate Gothic Bold',serif; font-size:2.1rem; color:#CC0066; display:block; line-height:1.1;">{low_coverage}</span>
+    <div style="font-family:'Arial Narrow',Arial,sans-serif; font-size:0.88rem; color:#555; margin-top:0.5rem;">Countries where fewer than half of mothers receive care</div>
+  </div>
+
+  <div style="background:linear-gradient(145deg,#FFE4F0 0%,#ffffff 100%); border:2px solid #FFB3D1; border-radius:10px; padding:1.2rem 1rem; text-align:center; box-shadow:0 2px 8px rgba(204,0,102,0.12);">
+    <span style="font-family:'Copperplate Gothic Bold',serif; font-size:2.1rem; color:#CC0066; display:block; line-height:1.1;">{high_coverage}</span>
+    <div style="font-family:'Arial Narrow',Arial,sans-serif; font-size:0.88rem; color:#555; margin-top:0.5rem;">Countries with ≥90% coverage — proof that universal care is achievable</div>
+  </div>
+
+  <div style="background:linear-gradient(145deg,#FFE4F0 0%,#ffffff 100%); border:2px solid #FFB3D1; border-radius:10px; padding:1.2rem 1rem; text-align:center; box-shadow:0 2px 8px rgba(204,0,102,0.12);">
+    <span style="font-family:'Copperplate Gothic Bold',serif; font-size:2.1rem; color:#CC0066; display:block; line-height:1.1;">5%</span>
+    <div style="font-family:'Arial Narrow',Arial,sans-serif; font-size:0.88rem; color:#555; margin-top:0.5rem;">Lowest coverage globally — Eritrea (2010 survey)</div>
+  </div>
+
+  <div style="background:linear-gradient(145deg,#FFE4F0 0%,#ffffff 100%); border:2px solid #FFB3D1; border-radius:10px; padding:1.2rem 1rem; text-align:center; box-shadow:0 2px 8px rgba(204,0,102,0.12);">
+    <span style="font-family:'Copperplate Gothic Bold',serif; font-size:2.1rem; color:#CC0066; display:block; line-height:1.1;">99.8%</span>
+    <div style="font-family:'Arial Narrow',Arial,sans-serif; font-size:0.88rem; color:#555; margin-top:0.5rem;">Highest coverage globally — Cuba & Turkmenistan</div>
+  </div>
+
+</div>
+"""
+
+display(HTML(html))
+```
 The numbers above represent more than statistics. Each percentage point below 100% is a mother who gave birth without a professional checking her blood pressure, examining for signs of sepsis, or ensuring her newborn was feeding correctly. The **68-percentage-point gap** between the world's best and worst performing countries is, in humanitarian terms, the difference between life and preventable death.
 
 ---
@@ -455,14 +465,19 @@ The numbers above represent more than statistics. Each percentage point below 10
 #| fig-width: 12
 #| fig-height: 6
 #| warning: false
+#| message: false
+#| echo: false
+#| code-fold: true
+#| code-summary: "Show code — World Map"
 
 import geopandas as gpd
-import pandas as pd
 import polars as pl
 from plotnine import *
 
-# Load world shapefile (naturalearth low res bundled with geopandas)
-world = gpd.read_file("https://naturalearth.s3.amazonaws.com/110m_cultural/ne_110m_admin_0_countries.zip")
+# Load world shapefile
+world = gpd.read_file(
+    "https://naturalearth.s3.amazonaws.com/110m_cultural/ne_110m_admin_0_countries.zip"
+)
 
 # Prepare indicator data
 latest_ind = (
@@ -475,41 +490,51 @@ latest_ind = (
     .to_pandas()
 )
 
-# Merge with world geodataframe
+# Merge with world geodata
+world_df = world.merge(
+    latest_ind,
+    left_on="ADM0_A3",
+    right_on="alpha_3_code",
+    how="left"
+)
 
-# Convert to plotnine-compatible format
-world_merged = world.merge(latest_ind, left_on="ADM0_A3", right_on="alpha_3_code", how="left")
-world_df = world_merged.copy()
-print(world.columns)
-
-(
+# Build map
+map_plot = (
     ggplot(world_df)
-    + geom_map(aes(fill='postnatal_pct'), color='white', size=0.15)
+    + geom_map(aes(fill="postnatal_pct"), color="white", size=0.15)
+    + coord_fixed(1.2)
     + scale_fill_gradientn(
-        colors=['#fff0f7', '#ffb3d1', '#ff6699', '#CC0066', '#800040'],
-        na_value='#e8e8e8',
-        name='Coverage (%)',
+        colors=["#fff0f7", "#ffb3d1", "#ff6699", "#CC0066", "#800040"],
+        na_value="#e8e8e8",
         limits=[0, 100],
-        breaks=[0, 25, 50, 75, 100]
+        breaks=[0, 25, 50, 75, 100],
+        name="Coverage (%)"
     )
     + theme_void()
     + theme(
         figure_size=(12, 6),
         plot_title=element_text(
-            family='Copperplate Gothic Bold', size=14,
-            color='#CC0066', ha='center', margin={'b': 10}
+            family="Copperplate Gothic Bold",
+            size=14,
+            color="#CC0066",
+            ha="center",
+            margin={"b": 10}
         ),
-        plot_subtitle=element_text(size=10, color='#555', ha='center', margin={'b': 15}),
-        legend_title=element_text(family='Arial Narrow', size=10),
-        legend_text=element_text(family='Arial Narrow', size=9),
-        panel_background=element_rect(fill='#f5f9ff'),
-        plot_background=element_rect(fill='white')
+        plot_subtitle=element_text(
+            size=10, color="#555", ha="center", margin={"b": 15}
+        ),
+        legend_title=element_text(family="Arial Narrow", size=10),
+        legend_text=element_text(family="Arial Narrow", size=9),
+        panel_background=element_rect(fill="#f5f9ff"),
+        plot_background=element_rect(fill="white")
     )
     + labs(
         title="Postnatal Care Coverage for Mothers — Global Overview",
         subtitle="Percentage of women (aged 15–49) receiving postnatal care within 2 days of birth | Latest survey per country"
     )
 )
+
+map_plot
 ```
 
 <div class="chart-caption">
@@ -524,7 +549,6 @@ Notably, some of Africa's highest-performing countries — including **Ghana (87
 **Policy implication**: Geographic clustering of low coverage suggests that regional health financing initiatives — such as targeted WHO-AFRO or UNICEF ROSA programmes — could have multiplicative impact by addressing shared structural barriers across neighbouring countries simultaneously.
 </div>
 
----
 
 ## 🩺 Chart 2: Top 15 & Bottom 15 Countries by Coverage {#bar-chart}
 
@@ -532,8 +556,11 @@ Notably, some of Africa's highest-performing countries — including **Ghana (87
 #| label: fig-bar-chart
 #| fig-cap: "The 15 highest and 15 lowest performing countries for postnatal care coverage (%) based on their most recent available survey."
 #| fig-width: 12
-#| fig-height: 9
+#| fig-height: 7
 #| warning: false
+#| message: false
+#| code-fold: true
+#| code-summary: "Show code — Bar Chart"
 
 import polars as pl
 from plotnine import *
@@ -549,46 +576,62 @@ latest = (
     .rename({"obs_value": "postnatal_pct"})
 )
 
-top15 = latest.sort("postnatal_pct", descending=True).head(15).with_columns(pl.lit("Top 15").alias("group"))
-bot15 = latest.sort("postnatal_pct").head(15).with_columns(pl.lit("Bottom 15").alias("group"))
-bar_df = pl.concat([top15, bot15]).to_pandas()
-bar_df['country'] = bar_df['country'].str[:25]  # truncate long names
-bar_df = bar_df.sort_values('postnatal_pct')
+top15 = latest.sort("postnatal_pct", descending=True).head(15)
+bot15 = latest.sort("postnatal_pct").head(15)
+
+bar_df = (
+    pl.concat([top15, bot15])
+    .with_columns([
+        pl.col("country").str.slice(0, 22).alias("country"),
+        pl.when(pl.col("postnatal_pct") >= 80)
+          .then(pl.lit("High (≥80%)"))
+          .otherwise(pl.lit("Low (<50%)"))
+          .alias("tier")
+    ])
+    .sort("postnatal_pct", descending=True)
+    .to_pandas()
+)
 
 (
-    ggplot(bar_df, aes(x='postnatal_pct', y='reorder(country, postnatal_pct)', fill='group'))
-    + geom_bar(stat='identity', width=0.7, alpha=0.9)
+    ggplot(bar_df, aes(x="reorder(country, postnatal_pct)", y="postnatal_pct", fill="tier"))
+    + geom_col(width=0.75)
+    + geom_hline(yintercept=68.4, linetype="dashed", color="#800040", size=0.8)
+    + annotate(
+    "text", x=1.5, y=71, label="Global avg: 68%",
+    color="#800040", size=8, ha="left"
+)
     + scale_fill_manual(
-        values={'Top 15': '#CC0066', 'Bottom 15': '#FFB3D1'},
-        name='Performance'
+        values={"High (≥80%)": "#CC0066", "Low (<50%)": "#FFB3D1"},
+        name=""
     )
-    + geom_vline(xintercept=68.4, linetype='dashed', color='#800040', size=0.8)
-    + annotate('text', x=70, y=1, label='Global avg: 68%',
-               color='#800040', size=8, ha='left', fontweight='bold')
-    + scale_x_continuous(limits=[0, 105], breaks=[0, 20, 40, 60, 80, 100])
+    + scale_y_continuous(limits=[0, 105], breaks=[0, 20, 40, 60, 80, 100],
+                         name="Postnatal Care Coverage (%)")
+    + coord_flip()
     + theme_minimal()
     + theme(
-        figure_size=(12, 9),
+        figure_size=(12, 7),
         plot_title=element_text(
-            family='Copperplate Gothic Bold', size=13, color='#CC0066', margin={'b': 8}
+            family="Copperplate Gothic Bold", size=13,
+            color="#CC0066", margin={"b": 8}
         ),
-        plot_subtitle=element_text(size=9.5, color='#555', margin={'b': 12}),
-        axis_title_x=element_text(family='Arial Narrow', size=10, color='#333'),
+        plot_subtitle=element_text(size=9.5, color="#555", margin={"b": 12}),
+        axis_title_x=element_text(family="Arial Narrow", size=10, color="#333"),
         axis_title_y=element_blank(),
-        axis_text_y=element_text(family='Arial Narrow', size=8.5, color='#333'),
-        axis_text_x=element_text(family='Arial Narrow', size=9),
-        legend_title=element_text(family='Arial Narrow', size=9),
-        legend_text=element_text(family='Arial Narrow', size=9),
+        axis_text_y=element_text(family="Arial Narrow", size=9, color="#333"),
+        axis_text_x=element_text(family="Arial Narrow", size=9),
+        legend_position="top",
+        legend_title=element_blank(),
+        legend_text=element_text(family="Arial Narrow", size=9),
         panel_grid_major_y=element_blank(),
         panel_grid_minor=element_blank(),
-        panel_grid_major_x=element_line(color='#f0e0ea', size=0.5),
-        plot_background=element_rect(fill='white'),
-        panel_background=element_rect(fill='white')
+        panel_grid_major_x=element_line(color="#f0e0ea", size=0.5),
+        plot_background=element_rect(fill="white"),
+        panel_background=element_rect(fill="white")
     )
     + labs(
         title="Postnatal Care Coverage: 15 Highest vs 15 Lowest Countries",
-        subtitle="Percentage of women (15–49 yrs) who received PNC within 2 days | Latest survey per country",
-        x="Postnatal Care Coverage (%)"
+        subtitle="% of women (15–49 yrs) receiving postnatal care within 2 days of birth | Latest survey per country",
+        x=""
     )
 )
 ```
@@ -941,34 +984,25 @@ The following primary data sources were used in this analysis:
 
 ---
 
-<div class="logo-footer">
-  <a href="https://www.unicef.org" target="_blank">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Logo_of_UNICEF.svg/200px-Logo_of_UNICEF.svg.png" alt="UNICEF" />
-    UNICEF
+<div style="display:flex; align-items:center; justify-content:center; gap:2.5rem; flex-wrap:wrap; padding:1.8rem; background-color:#FFF0F7; border-top:3px solid #FFB3D1; border-radius:10px; margin-top:3rem;">
+
+  <a href="https://www.unicef.org" target="_blank" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:0.4rem;">
+    <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="32" cy="32" r="30" fill="#00AEEF"/>
+      <text x="32" y="26" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="9" fill="white">UN</text>
+      <text x="32" y="38" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="7.5" fill="white">UNICEF</text>
+      <text x="32" y="50" text-anchor="middle" font-family="Arial" font-size="5.5" fill="white">For every child</text>
+    </svg>
+    <span style="font-family:'Arial Narrow',Arial,sans-serif; font-size:0.78rem; color:#CC0066; font-weight:bold;">UNICEF</span>
   </a>
-  <a href="https://www.who.int" target="_blank">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/World_Health_Organization_Logo.svg/200px-World_Health_Organization_Logo.svg.png" alt="WHO" />
-    World Health Organization
-  </a>
-  <a href="https://data.worldbank.org" target="_blank">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/World_Bank_logo.svg/200px-World_Bank_logo.svg.png" alt="World Bank" />
-    World Bank Data
-  </a>
-  <a href="https://www.unfpa.org" target="_blank">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/UNFPA_logo.svg/200px-UNFPA_logo.svg.png" alt="UNFPA" />
-    UNFPA
-  </a>
-  <a href="https://sdgs.un.org" target="_blank">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Sustainable_Development_Goals.svg/200px-Sustainable_Development_Goals.svg.png" alt="UN SDGs" />
-    UN SDGs
-  </a>
-  <a href="https://www.dhsprogram.com" target="_blank">
-    <img src="https://dhsprogram.com/images/DHS-Program-logo.png" alt="DHS Program" style="height:40px;" />
-    DHS Program
-  </a>
-</div>
+
+  <a href="https://www.who.int" target="_blank" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:0.4rem;">
+    <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="32" cy="32" r="30" fill="#005EB8"/>
+      <text x="32" y="29" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="8" fill="white">WHO</text>
+      <text x="32" y="41" text-anchor="middle"
 
 <p style="text-align:center; font-family: 'Arial Narrow', Arial, sans-serif; font-size:0.8rem; color:#aaa; margin-top:1rem;">
   Report prepared using UNICEF Postnatal Care Coverage Data (2008–2024) | Analysis conducted with Polars, Plotnine & GeoPandas |
-  Published with Quarto & GitHub Pages | © UNICEF Data Analytics Division
+  Published with Quarto & GitHub Pages | © Adetayo Eden David
 </p>
