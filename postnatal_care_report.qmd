@@ -348,7 +348,7 @@ h3 {
 
 ## 🩺 Introduction {#introduction}
 
-![Introduction image](images/intro_image.webp){width=80% fig-align="center"}
+![](images/intro_image.webp){width=100% fig-align="center" fig-alt="Illustrative image for the Introduction section"}
 
 Every year, millions of mothers give birth in conditions where the hours and days immediately following delivery represent the most dangerous period of their lives — and yet, for too many women around the world, this critical window passes **without any professional postnatal care**.
 
