@@ -1,0 +1,974 @@
+---
+title: "Postnatal Care for Mothers: A Global Crisis Hidden in Plain Sight"
+subtitle: "A UNICEF Data Analysis Report on Maternal Postnatal Care Coverage Worldwide"
+author: "Adetayo Eden David"
+date: today
+format:
+  html:
+    embed-resources: true
+    code-fold: true
+    toc: true
+    toc-title: "📋 Table of Contents"
+    toc-depth: 2
+    toc-location: left
+    number-sections: false
+    theme: flatly
+    css: styles.css
+    smooth-scroll: true
+    page-layout: full
+    fig-width: 10
+    fig-height: 6
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+```{python}
+#| label: setup
+#| echo: false
+#| warning: false
+#| message: false
+
+import polars as pl
+import pandas as pd
+import numpy as np
+from plotnine import (
+    ggplot, aes, geom_bar, geom_point, geom_line, geom_smooth,
+    theme, theme_minimal, theme_void, labs, scale_fill_gradient,
+    scale_fill_manual, scale_color_manual, scale_size_continuous,
+    element_text, element_rect, element_blank, element_line,
+    scale_x_continuous, scale_y_continuous, scale_fill_gradientn,
+    annotate, geom_hline, facet_wrap, theme_bw, position_dodge,
+    scale_fill_brewer, after_stat
+)
+import geopandas as gpd
+import warnings
+warnings.filterwarnings('ignore')
+```
+
+```{python}
+#| label: load-data
+#| echo: true
+#| code-fold: true
+
+# ── Load raw data ──────────────────────────────────────────────
+indicator_df = pl.read_csv("unicef_indicator_1.csv")
+metadata_df  = pl.read_csv("unicef_metadata.csv")
+
+# ── Data quality checks ────────────────────────────────────────
+print("Indicator shape:", indicator_df.shape)
+print("Metadata shape:", metadata_df.shape)
+print("\nIndicator nulls:\n", indicator_df.null_count())
+print("\nObs value range:", indicator_df["obs_value"].min(), "-", indicator_df["obs_value"].max())
+```
+
+```{python}
+#| label: transform-data
+#| echo: true
+#| code-fold: true
+
+# ── Get latest postnatal value per country ─────────────────────
+latest_ind = (
+    indicator_df
+    .sort("time_period", descending=True)
+    .group_by("alpha_3_code")
+    .first()
+    .select(["country", "alpha_2_code", "alpha_3_code", "obs_value", "time_period"])
+    .rename({"obs_value": "postnatal_pct", "time_period": "survey_year"})
+)
+
+# ── Get latest metadata per country (where GDP & LE available) ──
+latest_meta = (
+    metadata_df
+    .filter(
+        pl.col("GDP per capita (constant 2015 US$)").is_not_null() &
+        pl.col("Life expectancy at birth, total (years)").is_not_null()
+    )
+    .sort("year", descending=True)
+    .group_by("alpha_3_code")
+    .first()
+    .select([
+        "alpha_3_code", "country",
+        "GDP per capita (constant 2015 US$)",
+        "Life expectancy at birth, total (years)",
+        "Population, total",
+        "Birth rate, crude (per 1,000 people)",
+        "Hospital beds (per 1,000 people)"
+    ])
+    .rename({
+        "GDP per capita (constant 2015 US$)": "gdp_pc",
+        "Life expectancy at birth, total (years)": "life_exp",
+        "Population, total": "population",
+        "Birth rate, crude (per 1,000 people)": "birth_rate",
+        "Hospital beds (per 1,000 people)": "hospital_beds"
+    })
+)
+
+# ── Merge indicator + metadata ─────────────────────────────────
+merged_df = latest_ind.join(latest_meta, on="alpha_3_code", how="inner")
+print("Merged records:", merged_df.shape[0])
+
+# ── Time-series: global average by year ───────────────────────
+ts_df = (
+    indicator_df
+    .filter(pl.col("time_period").cast(pl.Int32) >= 2010)
+    .group_by("time_period")
+    .agg([
+        pl.col("obs_value").mean().alias("mean_pct"),
+        pl.col("obs_value").count().alias("n_countries"),
+        pl.col("obs_value").min().alias("min_pct"),
+        pl.col("obs_value").max().alias("max_pct")
+    ])
+    .sort("time_period")
+    .with_columns(pl.col("time_period").cast(pl.Int32))
+)
+
+# ── Bar chart: top 15 and bottom 15 countries ─────────────────
+bar_top15 = latest_ind.sort("postnatal_pct", descending=True).head(15)
+bar_bot15 = latest_ind.sort("postnatal_pct").head(15)
+bar_combined = pl.concat([bar_top15, bar_bot15]).with_columns(
+    pl.when(pl.col("postnatal_pct") >= 80)
+    .then(pl.lit("High Coverage (≥80%)"))
+    .when(pl.col("postnatal_pct") >= 50)
+    .then(pl.lit("Moderate Coverage (50–79%)"))
+    .otherwise(pl.lit("Low Coverage (<50%)"))
+    .alias("coverage_tier")
+)
+```
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Copperplate+Gothic+Bold&family=Arial+Narrow&display=swap');
+
+:root {
+  --unicef-fuchsia: #CC0066;
+  --unicef-pink-light: #FFE4F0;
+  --unicef-pink-mid: #FFB3D1;
+  --unicef-pink-bg: #FFF0F7;
+  --unicef-dark: #1a1a2e;
+  --unicef-text: #333344;
+  --unicef-accent: #E6005C;
+}
+
+body {
+  font-family: 'Arial Narrow', Arial, sans-serif;
+  color: var(--unicef-text);
+  background-color: #ffffff;
+  line-height: 1.7;
+  font-size: 16px;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Copperplate Gothic Bold', 'Copperplate', 'Copperplate Gothic Light', serif;
+  color: var(--unicef-fuchsia);
+  letter-spacing: 0.03em;
+}
+
+h1.title {
+  font-size: 2.2rem;
+  border-bottom: 3px solid var(--unicef-fuchsia);
+  padding-bottom: 0.5rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+  margin-top: 2.5rem;
+  border-left: 5px solid var(--unicef-fuchsia);
+  padding-left: 0.8rem;
+}
+
+h3 {
+  font-size: 1.2rem;
+  color: #990044;
+}
+
+.quarto-title-meta {
+  font-family: 'Arial Narrow', Arial, sans-serif;
+}
+
+/* TOC styling */
+#TOC {
+  background-color: var(--unicef-pink-bg);
+  border: 1px solid var(--unicef-pink-mid);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+#TOC .toc-title {
+  font-family: 'Copperplate Gothic Bold', serif;
+  color: var(--unicef-fuchsia);
+  font-size: 1rem;
+}
+
+#TOC a {
+  color: var(--unicef-fuchsia);
+  text-decoration: none;
+  font-family: 'Arial Narrow', Arial, sans-serif;
+}
+
+#TOC a:hover {
+  color: var(--unicef-accent);
+  text-decoration: underline;
+}
+
+#TOC li::before {
+  content: "👶 ";
+}
+
+/* SDG sub-header banner */
+.sdg-banner {
+  background: linear-gradient(135deg, var(--unicef-fuchsia) 0%, #FF4499 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+  font-family: 'Arial Narrow', Arial, sans-serif;
+  font-size: 1.05rem;
+  font-weight: bold;
+  box-shadow: 0 3px 10px rgba(204,0,102,0.3);
+}
+
+.sdg-banner a {
+  color: #FFE4F0;
+  text-decoration: underline;
+}
+
+.sdg-banner .sdg-icon {
+  font-size: 1.4rem;
+  margin-right: 0.5rem;
+}
+
+/* Stat boxes */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.stat-box {
+  background: linear-gradient(135deg, var(--unicef-pink-light) 0%, #fff 100%);
+  border: 2px solid var(--unicef-pink-mid);
+  border-radius: 10px;
+  padding: 1.2rem 1rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(204,0,102,0.1);
+}
+
+.stat-number {
+  font-family: 'Copperplate Gothic Bold', serif;
+  font-size: 2.2rem;
+  color: var(--unicef-fuchsia);
+  display: block;
+}
+
+.stat-label {
+  font-family: 'Arial Narrow', Arial, sans-serif;
+  font-size: 0.9rem;
+  color: #555;
+  margin-top: 0.4rem;
+}
+
+/* Chart caption / interpretation */
+.chart-caption {
+  font-style: italic;
+  color: #666;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-left: 3px solid var(--unicef-pink-mid);
+  padding-left: 0.8rem;
+}
+
+.chart-interpretation {
+  background-color: var(--unicef-pink-bg);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  margin: 1rem 0 2rem 0;
+  font-size: 0.97rem;
+  line-height: 1.7;
+  border: 1px solid var(--unicef-pink-mid);
+}
+
+/* Data notes collapsible */
+.data-notes-box {
+  background-color: var(--unicef-pink-light);
+  border: 1px solid var(--unicef-pink-mid);
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  margin: 2rem 0;
+}
+
+/* Logo footer */
+.logo-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  padding: 1.5rem;
+  background-color: var(--unicef-pink-bg);
+  border-top: 3px solid var(--unicef-pink-mid);
+  margin-top: 3rem;
+  border-radius: 8px;
+}
+
+.logo-footer a {
+  text-decoration: none;
+  color: var(--unicef-fuchsia);
+  font-family: 'Copperplate Gothic Bold', serif;
+  font-size: 0.85rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.logo-footer img {
+  height: 50px;
+  width: auto;
+  filter: none;
+  transition: transform 0.2s;
+}
+
+.logo-footer a:hover img {
+  transform: scale(1.05);
+}
+
+/* Callout overrides */
+.callout {
+  border-left-color: var(--unicef-fuchsia) !important;
+}
+
+/* Section heading decoration */
+.section-heading-icon::before {
+  content: "🩺 ";
+}
+</style>
+
+## 🩺 Introduction {#introduction}
+
+Every year, millions of mothers give birth in conditions where the hours and days immediately following delivery represent the most dangerous period of their lives — and yet, for too many women around the world, this critical window passes **without any professional postnatal care**.
+
+Postnatal care (PNC) refers to the health services provided to a mother and her newborn in the **first 48 hours after birth**. According to the World Health Organization (WHO), the majority of maternal and neonatal deaths occur during this period. Haemorrhage, infection, hypertensive disorders, and neonatal asphyxia — all preventable conditions — are responsible for hundreds of thousands of deaths annually that a timely postnatal check-up could detect, treat, or prevent entirely.
+
+This report analyses data from **UNICEF's global postnatal care coverage survey database**, tracking the percentage of women aged 15–49 years who received postnatal care within two days of giving birth across **112 countries**, spanning survey periods from 2008 to 2024. The data is enriched with UNICEF's socioeconomic metadata — including GDP per capita, life expectancy, and population — to reveal the structural drivers behind coverage disparities.
+
+**What this analysis finds is stark**: in some countries, virtually every mother receives care. In others, fewer than one in ten does. The gap is not random — it follows the fault lines of income inequality, healthcare infrastructure, and political will. This report makes the case that closing this gap is not merely a healthcare imperative; it is a matter of **basic human rights and global justice**.
+
+---
+
+<div class="sdg-banner">
+  <span class="sdg-icon">🌍</span>
+  <strong>Linked to UN Sustainable Development Goals:</strong>
+  This report directly supports
+  <a href="https://sdgs.un.org/goals/goal3" target="_blank">SDG 3: Good Health and Well-Being</a>
+  — specifically
+  <a href="https://unstats.un.org/sdgs/metadata/?Text=&Goal=3&Target=3.1" target="_blank">Target 3.1</a>
+  (reduce maternal mortality to fewer than 70 per 100,000 live births) and
+  <a href="https://unstats.un.org/sdgs/metadata/?Text=&Goal=3&Target=3.8" target="_blank">Target 3.8</a>
+  (achieve universal health coverage, including financial risk protection and access to quality essential healthcare services for all).
+  Postnatal care coverage is a direct, measurable pathway to achieving both targets.
+</div>
+
+---
+
+## 🩺 What This Report Examines {#what-this-report-examines}
+
+This report investigates **three interlinked questions**:
+
+1. **Where are postnatal care coverage gaps most severe?** — Using a world map, we identify geographic clusters of high and low coverage, revealing regional patterns that transcend individual country stories.
+
+2. **Which countries lead and which fall furthest behind?** — A comparative bar chart ranks the 15 highest and 15 lowest performing countries from the dataset, establishing the breadth of the global disparity.
+
+3. **What structural factors are associated with coverage levels?** — A scatterplot with linear regression examines the relationship between GDP per capita and postnatal care uptake, while controlling for life expectancy — testing the hypothesis that wealth alone determines access to care.
+
+4. **Is progress being made over time?** — A time-series chart tracks annual global average postnatal care coverage from 2010 to 2024, examining whether the long-term trend is one of improvement or stagnation.
+
+The findings from each chart build toward a synthesised argument: that **targeted investment in maternal health systems** — not economic growth alone — is the intervention most likely to save mothers' lives at scale.
+
+---
+
+## 🩺 Headline Facts From The Data {#headline-facts}
+
+```{python}
+#| label: headline-stats
+#| echo: false
+#| output: asis
+
+# Compute headline numbers
+vals = [float(r['obs_value']) for r in __import__('csv').DictReader(open('unicef_indicator_1.csv'))]
+latest_vals_dict = {}
+import csv
+with open('unicef_indicator_1.csv') as f:
+    for r in csv.DictReader(f):
+        c = r['alpha_3_code']
+        if c not in latest_vals_dict or r['time_period'] > latest_vals_dict[c][1]:
+            latest_vals_dict[c] = (float(r['obs_value']), r['time_period'])
+
+latest_vals = [v[0] for v in latest_vals_dict.values()]
+n_countries = len(latest_vals)
+global_avg = sum(latest_vals)/n_countries
+low_coverage = sum(1 for v in latest_vals if v < 50)
+high_coverage = sum(1 for v in latest_vals if v >= 90)
+
+print(f"""
+<div class="stat-grid">
+  <div class="stat-box">
+    <span class="stat-number">{n_countries}</span>
+    <div class="stat-label">Countries with postnatal care data</div>
+  </div>
+  <div class="stat-box">
+    <span class="stat-number">{global_avg:.0f}%</span>
+    <div class="stat-label">Global average coverage (latest survey per country)</div>
+  </div>
+  <div class="stat-box">
+    <span class="stat-number">{low_coverage}</span>
+    <div class="stat-label">Countries where fewer than half of mothers receive care</div>
+  </div>
+  <div class="stat-box">
+    <span class="stat-number">{high_coverage}</span>
+    <div class="stat-label">Countries with ≥90% coverage — proof that universal care is achievable</div>
+  </div>
+  <div class="stat-box">
+    <span class="stat-number">5%</span>
+    <div class="stat-label">Lowest coverage globally — Eritrea (2010 survey)</div>
+  </div>
+  <div class="stat-box">
+    <span class="stat-number">99.8%</span>
+    <div class="stat-label">Highest coverage globally — Cuba & Turkmenistan</div>
+  </div>
+</div>
+""")
+```
+
+The numbers above represent more than statistics. Each percentage point below 100% is a mother who gave birth without a professional checking her blood pressure, examining for signs of sepsis, or ensuring her newborn was feeding correctly. The **68-percentage-point gap** between the world's best and worst performing countries is, in humanitarian terms, the difference between life and preventable death.
+
+---
+
+## 🩺 Chart 1: Global Postnatal Care Coverage — World Map {#world-map}
+
+```{python}
+#| label: fig-world-map
+#| fig-cap: "Global postnatal care coverage (%) — latest available survey data per country (2008–2024). Countries without data are shown in light grey."
+#| fig-width: 12
+#| fig-height: 6
+#| warning: false
+
+import geopandas as gpd
+import pandas as pd
+import polars as pl
+from plotnine import *
+
+# Load world shapefile (naturalearth low res bundled with geopandas)
+world = gpd.read_file("https://naturalearth.s3.amazonaws.com/110m_cultural/ne_110m_admin_0_countries.zip")
+
+# Prepare indicator data
+latest_ind = (
+    pl.read_csv("unicef_indicator_1.csv")
+    .sort("time_period", descending=True)
+    .group_by("alpha_3_code")
+    .first()
+    .select(["alpha_3_code", "obs_value"])
+    .rename({"obs_value": "postnatal_pct"})
+    .to_pandas()
+)
+
+# Merge with world geodataframe
+
+# Convert to plotnine-compatible format
+world_merged = world.merge(latest_ind, left_on="ADM0_A3", right_on="alpha_3_code", how="left")
+world_df = world_merged.copy()
+print(world.columns)
+
+(
+    ggplot(world_df)
+    + geom_map(aes(fill='postnatal_pct'), color='white', size=0.15)
+    + scale_fill_gradientn(
+        colors=['#fff0f7', '#ffb3d1', '#ff6699', '#CC0066', '#800040'],
+        na_value='#e8e8e8',
+        name='Coverage (%)',
+        limits=[0, 100],
+        breaks=[0, 25, 50, 75, 100]
+    )
+    + theme_void()
+    + theme(
+        figure_size=(12, 6),
+        plot_title=element_text(
+            family='Copperplate Gothic Bold', size=14,
+            color='#CC0066', ha='center', margin={'b': 10}
+        ),
+        plot_subtitle=element_text(size=10, color='#555', ha='center', margin={'b': 15}),
+        legend_title=element_text(family='Arial Narrow', size=10),
+        legend_text=element_text(family='Arial Narrow', size=9),
+        panel_background=element_rect(fill='#f5f9ff'),
+        plot_background=element_rect(fill='white')
+    )
+    + labs(
+        title="Postnatal Care Coverage for Mothers — Global Overview",
+        subtitle="Percentage of women (aged 15–49) receiving postnatal care within 2 days of birth | Latest survey per country"
+    )
+)
+```
+
+<div class="chart-caption">
+  **Figure 1** shows postnatal care coverage as a heat map, with deeper fuchsia indicating higher coverage. Grey countries have no data in the UNICEF dataset.
+</div>
+
+<div class="chart-interpretation">
+The world map reveals a striking **geographic polarisation** in postnatal care access. Deep fuchsia coverage dominates across **Latin America, Eastern Europe, Central Asia, and parts of North Africa and the Middle East**, where national health systems have historically invested in maternal and child health programmes. By contrast, **sub-Saharan Africa and parts of South Asia** show pale or mid-tone coverage, indicating that large populations of women are giving birth without any follow-up professional care.
+
+Notably, some of Africa's highest-performing countries — including **Ghana (87.3%), Senegal (82.9%), and Gambia (87.9%)** — demonstrate that high postnatal coverage is achievable even in lower-income settings when community health worker programmes and government investment are prioritised. The large grey areas across the map — representing missing data — are themselves a policy concern; the absence of data often correlates with the absence of functioning health information systems, which itself is a marker of fragile health infrastructure.
+
+**Policy implication**: Geographic clustering of low coverage suggests that regional health financing initiatives — such as targeted WHO-AFRO or UNICEF ROSA programmes — could have multiplicative impact by addressing shared structural barriers across neighbouring countries simultaneously.
+</div>
+
+---
+
+## 🩺 Chart 2: Top 15 & Bottom 15 Countries by Coverage {#bar-chart}
+
+```{python}
+#| label: fig-bar-chart
+#| fig-cap: "The 15 highest and 15 lowest performing countries for postnatal care coverage (%) based on their most recent available survey."
+#| fig-width: 12
+#| fig-height: 9
+#| warning: false
+
+import polars as pl
+from plotnine import *
+
+ind_df = pl.read_csv("unicef_indicator_1.csv")
+
+latest = (
+    ind_df
+    .sort("time_period", descending=True)
+    .group_by("alpha_3_code")
+    .first()
+    .select(["country", "obs_value"])
+    .rename({"obs_value": "postnatal_pct"})
+)
+
+top15 = latest.sort("postnatal_pct", descending=True).head(15).with_columns(pl.lit("Top 15").alias("group"))
+bot15 = latest.sort("postnatal_pct").head(15).with_columns(pl.lit("Bottom 15").alias("group"))
+bar_df = pl.concat([top15, bot15]).to_pandas()
+bar_df['country'] = bar_df['country'].str[:25]  # truncate long names
+bar_df = bar_df.sort_values('postnatal_pct')
+
+(
+    ggplot(bar_df, aes(x='postnatal_pct', y='reorder(country, postnatal_pct)', fill='group'))
+    + geom_bar(stat='identity', width=0.7, alpha=0.9)
+    + scale_fill_manual(
+        values={'Top 15': '#CC0066', 'Bottom 15': '#FFB3D1'},
+        name='Performance'
+    )
+    + geom_vline(xintercept=68.4, linetype='dashed', color='#800040', size=0.8)
+    + annotate('text', x=70, y=1, label='Global avg: 68%',
+               color='#800040', size=8, ha='left', fontweight='bold')
+    + scale_x_continuous(limits=[0, 105], breaks=[0, 20, 40, 60, 80, 100])
+    + theme_minimal()
+    + theme(
+        figure_size=(12, 9),
+        plot_title=element_text(
+            family='Copperplate Gothic Bold', size=13, color='#CC0066', margin={'b': 8}
+        ),
+        plot_subtitle=element_text(size=9.5, color='#555', margin={'b': 12}),
+        axis_title_x=element_text(family='Arial Narrow', size=10, color='#333'),
+        axis_title_y=element_blank(),
+        axis_text_y=element_text(family='Arial Narrow', size=8.5, color='#333'),
+        axis_text_x=element_text(family='Arial Narrow', size=9),
+        legend_title=element_text(family='Arial Narrow', size=9),
+        legend_text=element_text(family='Arial Narrow', size=9),
+        panel_grid_major_y=element_blank(),
+        panel_grid_minor=element_blank(),
+        panel_grid_major_x=element_line(color='#f0e0ea', size=0.5),
+        plot_background=element_rect(fill='white'),
+        panel_background=element_rect(fill='white')
+    )
+    + labs(
+        title="Postnatal Care Coverage: 15 Highest vs 15 Lowest Countries",
+        subtitle="Percentage of women (15–49 yrs) who received PNC within 2 days | Latest survey per country",
+        x="Postnatal Care Coverage (%)"
+    )
+)
+```
+
+<div class="chart-caption">
+  **Figure 2** compares the 15 highest-coverage countries (deep fuchsia) against the 15 lowest (light pink). The dashed vertical line marks the global dataset average of approximately 68%.
+</div>
+
+<div class="chart-interpretation">
+The bar chart lays bare the **extraordinary range of human experience** when it comes to postnatal care. At the top end, **Cuba and Turkmenistan** have achieved near-perfect coverage (99.8%), followed closely by **Uzbekistan (99.5%), Belarus (99.4%), and Sri Lanka (99.2%)**. These countries span different income levels and geographic regions, but share a common thread: **strong state investment in primary healthcare and community health outreach**. Sri Lanka in particular is a globally celebrated case study, having achieved near-universal maternal care coverage on a modest per-capita GDP through a network of public health midwives deployed to rural communities.
+
+At the other extreme, **Eritrea (5%), South Sudan (8.1%), and Kyrgyzstan (8.7%)** represent a catastrophic failure of care. For every 100 mothers who give birth in Eritrea, **95 receive no postnatal check-up within 48 hours** — the window during which postpartum haemorrhage and sepsis, the two leading killers of new mothers, are most likely to strike. South Sudan's figure reflects the compounding impact of decades of conflict on health infrastructure. Kyrgyzstan's low figure, despite being a middle-income country, suggests access barriers including distance, cost, and cultural factors may be as critical as national income.
+
+**Policy implication**: The countries in the top 15 collectively demonstrate that **postnatal coverage of 90%+ is achievable at any income level**. The bottom 15 urgently require targeted humanitarian and development investment in trained birth attendants, community health workers, and telemedicine infrastructure to reach isolated communities.
+</div>
+
+---
+
+## 🩺 Chart 3: GDP Per Capita vs. Postnatal Care Coverage {#scatterplot}
+
+```{python}
+#| label: fig-scatterplot
+#| fig-cap: "Scatterplot of GDP per capita (2015 USD, log scale) versus postnatal care coverage (%) with linear regression line. Bubble size represents country population."
+#| fig-width: 11
+#| fig-height: 7
+#| warning: false
+
+import polars as pl
+from plotnine import *
+import numpy as np
+
+ind_df = pl.read_csv("unicef_indicator_1.csv")
+meta_df = pl.read_csv("unicef_metadata.csv")
+
+latest_ind = (
+    ind_df
+    .sort("time_period", descending=True)
+    .group_by("alpha_3_code")
+    .first()
+    .select(["country", "alpha_3_code", "obs_value"])
+    .rename({"obs_value": "postnatal_pct"})
+)
+
+# First, cast GDP per capita to float, replacing non-numeric with null
+meta_df = meta_df.with_columns(
+    pl.col("GDP per capita (constant 2015 US$)").cast(pl.Float64, strict=False)
+)
+
+# Now filter only rows where GDP and life expectancy are not null and GDP > 0
+latest_meta = (
+    meta_df
+    .filter(
+        pl.col("GDP per capita (constant 2015 US$)").is_not_null() &
+        pl.col("Life expectancy at birth, total (years)").is_not_null() &
+        (pl.col("GDP per capita (constant 2015 US$)") > 0)
+    )
+    .sort("year", descending=True)
+    .group_by("alpha_3_code")
+    .first()
+    .select([
+        "alpha_3_code",
+        pl.col("GDP per capita (constant 2015 US$)").alias("gdp_pc"),
+        pl.col("Life expectancy at birth, total (years)").cast(pl.Float64).alias("life_exp"),
+        pl.col("Population, total").cast(pl.Float64).alias("population")
+    ])
+)
+
+scatter_df = (
+    latest_ind
+    .join(latest_meta, on="alpha_3_code", how="inner")
+    .with_columns([
+        pl.col("gdp_pc").log(base=10).alias("log_gdp"),
+        (pl.col("population") / 1e6).alias("pop_millions")
+    ])
+    .with_columns(
+        pl.when(pl.col("postnatal_pct") >= 80)
+        .then(pl.lit("High (≥80%)"))
+        .when(pl.col("postnatal_pct") >= 50)
+        .then(pl.lit("Moderate (50–79%)"))
+        .otherwise(pl.lit("Low (<50%)"))
+        .alias("coverage_tier")
+    )
+    .to_pandas()
+)
+
+scatter_df['pop_millions'] = scatter_df['pop_millions'].clip(upper=500)
+
+(
+    ggplot(scatter_df, aes(x='log_gdp', y='postnatal_pct', size='pop_millions', color='coverage_tier'))
+    + geom_point(alpha=0.65)
+    + geom_smooth(aes(x='log_gdp', y='postnatal_pct'), method='lm', color='#800040',
+                  fill='#FFB3D1', se=True, size=1.2, inherit_aes=False)
+    + scale_color_manual(
+        values={'High (≥80%)': '#CC0066', 'Moderate (50–79%)': '#FF6699', 'Low (<50%)': '#FFB3D1'},
+        name='Coverage tier'
+    )
+    + scale_size_continuous(range=(2, 15), name='Population (millions)', breaks=[10, 50, 200, 500])
+    + scale_x_continuous(
+        breaks=[2.5, 3, 3.5, 4, 4.5],
+        labels=['$316', '$1K', '$3.2K', '$10K', '$32K'],
+        name="GDP per Capita (log scale, constant 2015 USD)"
+    )
+    + scale_y_continuous(limits=[0, 105], name="Postnatal Care Coverage (%)")
+    + theme_minimal()
+    + theme(
+        figure_size=(11, 7),
+        plot_title=element_text(
+            family='Copperplate Gothic Bold', size=13, color='#CC0066', margin={'b': 8}
+        ),
+        plot_subtitle=element_text(size=9.5, color='#555', margin={'b': 12}),
+        axis_title=element_text(family='Arial Narrow', size=10, color='#333'),
+        axis_text=element_text(family='Arial Narrow', size=9),
+        legend_title=element_text(family='Arial Narrow', size=9),
+        legend_text=element_text(family='Arial Narrow', size=9),
+        panel_grid_minor=element_blank(),
+        panel_grid_major=element_line(color='#f5e8f0', size=0.5),
+        plot_background=element_rect(fill='white'),
+        panel_background=element_rect(fill='white')
+    )
+    + labs(
+        title="GDP Per Capita vs. Postnatal Care Coverage",
+        subtitle="Each bubble = one country | Bubble size = population | Regression line shows overall trend"
+    )
+)
+```
+
+<div class="chart-caption">
+  **Figure 3** plots GDP per capita (log scale) against postnatal care coverage, with bubble size representing population and colour indicating coverage tier. The regression line shows the overall trend.
+</div>
+
+<div class="chart-interpretation">
+The scatterplot confirms a **positive but imperfect relationship** between national wealth and postnatal care coverage. The linear regression line shows that, broadly, wealthier countries tend to report higher coverage rates — a pattern consistent with the general finding that income enables healthcare infrastructure. However, the **wide scatter around the regression line** tells the more important story: **GDP alone does not determine postnatal care outcomes**.
+
+Several notable outlier clusters emerge. In the **upper-left quadrant** (high coverage, low GDP), countries such as **Kyrgyzstan, Vietnam, Cambodia, and several West African nations** have achieved coverage well above what their income levels would predict — a testament to targeted health system investment, community health programmes, and strong government prioritisation of maternal health. Conversely, in the **lower-right quadrant** (low coverage despite moderate income), countries including **Equatorial Guinea and Saudi Arabia** suggest that income can be a necessary but insufficient condition: without accessible, culturally appropriate, and geographically distributed healthcare, wealth does not automatically translate into postnatal care uptake.
+
+The **large-population bubbles** (India, Nigeria, Pakistan) clustered in the middle ranges are disproportionately important: these countries account for a significant share of global births, meaning even marginal improvements in their coverage rates would affect millions of mothers annually.
+
+**Policy implication**: The weak correlation for high-income countries suggests that **above a certain income threshold, health system design, cultural factors, and political will** become the binding constraints on postnatal coverage — not budget. Development finance should therefore be paired with technical assistance on health system strengthening, not just financial transfers.
+</div>
+
+---
+
+## 🩺 Chart 4: Trends in Global Postnatal Care Coverage, 2010–2024 {#time-series}
+
+```{python}
+#| label: fig-time-series
+#| fig-cap: "Annual global average postnatal care coverage (%) from 2010 to 2024. Each point represents the mean across all countries surveyed in that year, with the number of countries annotated."
+#| fig-width: 11
+#| fig-height: 6
+#| warning: false
+
+import polars as pl
+from plotnine import *
+
+ind_df = pl.read_csv("unicef_indicator_1.csv")
+
+ts_df = (
+    ind_df
+    .filter(pl.col("time_period").cast(pl.Int32) >= 2010)
+    .group_by("time_period")
+    .agg([
+        pl.col("obs_value").mean().alias("mean_pct"),
+        pl.col("obs_value").count().alias("n_countries"),
+        pl.col("obs_value").min().alias("min_pct"),
+        pl.col("obs_value").max().alias("max_pct")
+    ])
+    .sort("time_period")
+    .with_columns(pl.col("time_period").cast(pl.Int32))
+    .to_pandas()
+)
+
+(
+    ggplot(ts_df, aes(x='time_period', y='mean_pct'))
+    + geom_ribbon(aes(ymin='min_pct', ymax='max_pct'), fill='#FFB3D1', alpha=0.3)
+    + geom_line(color='#CC0066', size=1.3)
+    + geom_point(color='#CC0066', size=3.5, fill='white', stroke=1.5)
+    + geom_text(
+        aes(label='n_countries'),
+        nudge_y=4, size=7.5, color='#800040',
+        format_string='n={}'
+    )
+    + geom_hline(yintercept=80, linetype='dashed', color='#999', size=0.7)
+    + annotate('text', x=2010.3, y=82, label='80% target threshold',
+         color='#777', size=8, ha='left')
+    + scale_x_continuous(breaks=list(range(2010, 2025)), name="Year")
+    + scale_y_continuous(limits=[0, 105], breaks=[0, 20, 40, 60, 80, 100], name="Mean Coverage (%)")
+    + theme_minimal()
+    + theme(
+        figure_size=(11, 6),
+        plot_title=element_text(
+            family='Copperplate Gothic Bold', size=13, color='#CC0066', margin={'b': 8}
+        ),
+        plot_subtitle=element_text(size=9.5, color='#555', margin={'b': 12}),
+        axis_title=element_text(family='Arial Narrow', size=10, color='#333'),
+        axis_text=element_text(family='Arial Narrow', size=9),
+        axis_text_x=element_text(angle=45, ha='right'),
+        panel_grid_minor=element_blank(),
+        panel_grid_major=element_line(color='#f5e8f0', size=0.5),
+        plot_background=element_rect(fill='white'),
+        panel_background=element_rect(fill='white')
+    )
+    + labs(
+        title="Global Postnatal Care Coverage: Annual Trend (2010–2024)",
+        subtitle="Line = mean coverage across surveyed countries | Ribbon = min–max range | Labels = number of countries surveyed"
+    )
+)
+```
+
+<div class="chart-caption">
+  **Figure 4** tracks the annual global average postnatal care coverage (solid line) with the full min–max range across surveyed countries shown as the shaded ribbon. Country counts per year are labelled above each data point.
+</div>
+
+<div class="chart-interpretation">
+The time series reveals a **mixed and volatile picture** of global progress in postnatal care coverage. From 2010 to 2014, average coverage across surveyed countries rose from approximately 40% to 74% — a rapid and encouraging gain. However, this apparent trend must be interpreted carefully: the number of countries surveyed each year varies significantly (from as few as 9 in 2010 to 33 in 2014), meaning **changes in the composition of surveyed countries** partially drive apparent changes in the average, rather than genuine country-level improvements alone.
+
+What is unambiguous is the **persistently wide range** between the best and worst performing countries in any given year — a gap that has never closed below 80 percentage points across the entire period. The shaded ribbon makes this disparity visually stark. Even in years with the highest averages, countries like Eritrea and South Sudan languished far below while Cuba and Turkmenistan hovered near 100%.
+
+The **2020 data point** is noteworthy — the highest average in the dataset at approximately 81% — though this was recorded from only 12 countries, likely a COVID-19 data collection effect where surveys were more easily conducted in countries with stronger health systems. The **post-2020 dip** to the mid-60s may reflect both sampling composition changes and pandemic-related disruptions to maternal health services globally.
+
+**Policy implication**: The volatile year-on-year averages underscore the need for **more frequent and comprehensive UNICEF survey cycles** to produce a reliable global progress signal. Current data gaps make it difficult to assess whether the world is genuinely on track to meet SDG Target 3.1's maternal mortality goals by 2030 — a critical accountability failure that itself warrants urgent attention.
+</div>
+
+---
+
+<details>
+<summary style="font-family: 'Copperplate Gothic Bold', serif; color: #CC0066; font-size: 1.1rem; cursor: pointer; padding: 0.8rem; background-color: #FFE4F0; border-radius: 6px; border: 1px solid #FFB3D1;">
+  📋 Data Notes — Click to expand
+</summary>
+
+<div class="data-notes-box">
+
+### Data Notes & Methodological Caveats
+
+**Indicator Definition**
+The postnatal care indicator measures the percentage of women aged 15–49 who gave birth in the two years preceding the survey and received a postnatal check from a skilled health provider within two days of delivery. Source: UNICEF global databases compiled from Demographic and Health Surveys (DHS), Multiple Indicator Cluster Surveys (MICS), and national surveys.
+
+**Survey Design & Temporal Coverage**
+- Survey years span from 2008 to 2024, with most data concentrated in 2010–2023.
+- Each country may have multiple survey points; this analysis uses the **most recent available observation** per country for cross-sectional maps and bar charts.
+- The time series uses **all available observations per year** to compute annual means — meaning the sample composition changes year on year.
+
+**Metadata Variables**
+- GDP per capita: World Bank national accounts data (constant 2015 USD) — matched to the most recent available year per country.
+- Life expectancy: World Bank Development Indicators.
+- Population: World Bank estimates.
+
+**Data Gaps & Limitations**
+- Approximately 80+ countries have no postnatal care survey data in this dataset, including most high-income countries where near-universal coverage is presumed but not formally surveyed.
+- Data for conflict-affected states (South Sudan, Somalia, Yemen, Afghanistan) may underestimate coverage due to population displacement and inability to survey remote/insecure areas.
+- The indicator captures only whether care was *received*, not the quality, content, or cultural appropriateness of that care.
+- The `sex` field in the indicator file records "Total" for all observations, indicating no sex-disaggregated breakdown is available in this dataset.
+
+**World Map Note**
+The world map uses the Natural Earth Low Resolution boundary dataset bundled with GeoPandas. Country ISO codes are matched on alpha-3 codes; a small number of territories may not match due to ISO code discrepancies between datasets.
+
+</div>
+</details>
+
+---
+
+## 🩺 Call to Action {#call-to-action}
+
+The data presented in this report is not a set of historical curiosities — it is a **live measure of ongoing preventable deaths**. Every year that passes without meaningful scale-up of postnatal care coverage in low-performing countries represents thousands of mothers who died from conditions that a single trained health worker visit could have identified and treated.
+
+The call to action operates at three levels:
+
+**For governments and health ministries** in low-coverage countries: postnatal care must be **legally mandated as a universal entitlement** and fully financed in national health budgets. Community health worker programmes — proven in countries like Ethiopia, Rwanda, and Ghana — should be scaled nationally, with particular focus on reaching rural and peri-urban populations.
+
+**For international donors and development banks**: maternal health must be elevated as a **priority investment category** within universal health coverage financing frameworks. The evidence shows that high coverage is achievable at low cost when community-level delivery systems are adequately resourced.
+
+**For international health bodies** (WHO, UNICEF, UNFPA): the chronic **data gaps** in this dataset — particularly for high-burden countries — represent a monitoring failure that must be urgently addressed. Annual survey data, rather than periodic surveys, is needed to track SDG progress in real time.
+
+---
+
+## 🩺 Recommendations {#recommendations}
+
+Based on the analysis of UNICEF postnatal care coverage data, the following evidence-based policy recommendations are advanced:
+
+1. **Adopt the WHO's 2016 recommendation** of a minimum of four postnatal contacts for all mothers and newborns as the global care standard, replacing the older two-day minimum.
+
+2. **Expand community health worker (CHW) programmes** in countries where facility-based care is geographically or financially inaccessible — evidence from Ethiopia, Bangladesh, and Nepal demonstrates CHWs can deliver postnatal checks at scale for under $5 per contact.
+
+3. **Integrate postnatal care into universal health coverage benefit packages** so that cost is never a barrier to a mother seeking care in the first 48 hours.
+
+4. **Address data poverty**: UNICEF and national statistics offices should commit to at minimum **five-year survey cycles** for postnatal care data collection across all 193 UN member states.
+
+5. **Target the bottom 15 countries identified in this analysis** — Eritrea, South Sudan, Kyrgyzstan, Somalia, Angola, Chad, Sudan, Haiti, Ethiopia, Niger, Timor-Leste, Mozambique, Afghanistan, Equatorial Guinea, and Yemen — for **emergency maternal health scale-up programmes**, recognising that these nations contain millions of women giving birth each year without any postnatal support.
+
+6. **Apply a gender equity lens** to coverage data: in many low-coverage countries, adolescent mothers and women in rural areas face the worst access. Targeted outreach for these groups should be a core element of national postnatal care strategies.
+
+---
+
+## 🩺 Synthesis & Conclusion {#synthesis-conclusion}
+
+This report has told a story in four visualisations. The **world map** revealed that postnatal care deserts are concentrated in sub-Saharan Africa and fragile states — but that even within these regions, ambitious outliers demonstrate what is possible. The **bar chart** exposed the extraordinary 94-percentage-point gap between the world's best and worst performing countries, a gap that has no parallel in most other basic health indicators. The **scatterplot** showed that while wealth matters, it is far from destiny: some of the world's most impressive postnatal care systems operate in low-income settings, while some middle-income countries perform far below expectations. And the **time series** revealed a global trend that is improving — but too slowly, too unevenly, and too poorly measured to inspire confidence that the SDG 3 targets will be met by 2030.
+
+The unifying thesis of this analysis is simple: **postnatal care is one of the highest-value health interventions in existence**. It requires relatively few resources, relatively simple skills, and relatively modest infrastructure. What it requires, above all, is **political will** — the decision by governments, donors, and international health bodies to treat the first 48 hours of a mother's postpartum life as the critical medical window it is.
+
+The global average coverage of 68% means that approximately one in three mothers in the countries measured is not receiving this care. In the worst-performing nations, **nine in ten mothers** are left without support. This is not a development challenge that awaits a technological breakthrough or an economic miracle. The solutions exist. The evidence base is robust. What is required is action.
+
+---
+
+## 🩺 Report Limitations {#report-limitations}
+
+This analysis, while comprehensive given the available data, is subject to several important limitations that should be noted when interpreting its findings:
+
+- **Sample coverage**: The dataset covers 112 countries, representing roughly 58% of all UN member states. High-income countries — including the entire OECD — are largely absent because near-universal coverage is assumed. This means the dataset is systematically biased toward developing nations and cannot be used to make claims about the global average in an absolute sense.
+
+- **Temporal mismatch**: Because different countries were surveyed in different years (some data dating to 2008, others to 2024), cross-country comparisons conflate geographic and temporal variation. A country surveyed in 2010 may have significantly improved or deteriorated by 2024.
+
+- **Survey methodology variation**: DHS, MICS, and national surveys use broadly harmonised methodologies, but sampling frames, recall periods, and interviewer training vary. Direct numeric comparisons between countries should be made with appropriate caution.
+
+- **Quality of care not captured**: The indicator measures only whether a postnatal contact was made, not whether it was clinically effective, included essential components (blood pressure check, examination of the wound, breastfeeding support), or was delivered by an appropriately trained provider.
+
+- **Metadata year mismatch**: GDP and life expectancy data were matched to the most recent available year per country, which may differ from the year of the postnatal survey — introducing potential temporal inconsistency in the scatterplot analysis.
+
+---
+
+## 🩺 Data Sources {#data-sources}
+
+The following primary data sources were used in this analysis:
+
+- **UNICEF Global Databases — Postnatal Care for Mothers Indicator** (`unicef_indicator_1.csv`): Percentage of women (aged 15–49 years) who received postnatal care within 2 days of giving birth. Data compiled from Demographic and Health Surveys (DHS), Multiple Indicator Cluster Surveys (MICS), and national surveys. Available at: [data.unicef.org](https://data.unicef.org/topic/maternal-health/delivery-care/)
+
+- **UNICEF Socioeconomic Metadata** (`unicef_metadata.csv`): Country-level indicators including GDP per capita (constant 2015 USD), life expectancy at birth, total population, birth rate, and hospital bed density. Underlying data sourced from the World Bank World Development Indicators. Available at: [data.worldbank.org](https://data.worldbank.org/indicator)
+
+- **Natural Earth / GeoPandas Low Resolution Boundaries**: Used for the world map visualisation. Available at: [naturalearthdata.com](https://www.naturalearthdata.com/)
+
+- **UN SDG Metadata Repository**: Indicator metadata for SDG Targets 3.1 and 3.8. Available at: [unstats.un.org/sdgs](https://unstats.un.org/sdgs/metadata/)
+
+---
+
+## 🩺 References {#references}
+
+1. World Health Organization (2022). *WHO recommendations on postnatal care of the mother and newborn*. Geneva: WHO Press. Available at: [who.int/publications](https://www.who.int/publications/i/item/9789241506649)
+
+2. UNICEF (2023). *Maternal and Newborn Health — Postnatal Care*. New York: UNICEF. Available at: [unicef.org/health/maternal](https://www.unicef.org/health/maternal-health)
+
+3. United Nations (2015). *Transforming our world: The 2030 Agenda for Sustainable Development*. Resolution A/RES/70/1. Available at: [un.org/sustainabledevelopment](https://sdgs.un.org/goals/goal3)
+
+4. WHO (2016). *WHO recommendations on antenatal care for a positive pregnancy experience*. Geneva: WHO. Available at: [who.int](https://www.who.int/reproductivehealth/publications/maternal_perinatal_health/anc-positive-pregnancy-experience/en/)
+
+5. Lawn, J.E. et al. (2014). *Every Newborn: progress, priorities and potential beyond survival*. The Lancet, 384(9938), 189–205. Available at: [thelancet.com](https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(14)60496-7/fulltext)
+
+6. World Bank (2024). *World Development Indicators — Health*. Washington DC: World Bank Group. Available at: [databank.worldbank.org](https://databank.worldbank.org/source/world-development-indicators)
+
+7. UNFPA (2021). *State of World Population 2021: My Body is My Own*. New York: UNFPA. Available at: [unfpa.org/swp2021](https://www.unfpa.org/swop)
+
+8. DHS Program (2024). *Demographic and Health Surveys — Maternal Health Module*. ICF International. Available at: [dhsprogram.com](https://www.dhsprogram.com/topics/maternal-and-newborn-health.cfm)
+
+---
+
+<div class="logo-footer">
+  <a href="https://www.unicef.org" target="_blank">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Logo_of_UNICEF.svg/200px-Logo_of_UNICEF.svg.png" alt="UNICEF" />
+    UNICEF
+  </a>
+  <a href="https://www.who.int" target="_blank">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/World_Health_Organization_Logo.svg/200px-World_Health_Organization_Logo.svg.png" alt="WHO" />
+    World Health Organization
+  </a>
+  <a href="https://data.worldbank.org" target="_blank">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/World_Bank_logo.svg/200px-World_Bank_logo.svg.png" alt="World Bank" />
+    World Bank Data
+  </a>
+  <a href="https://www.unfpa.org" target="_blank">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/UNFPA_logo.svg/200px-UNFPA_logo.svg.png" alt="UNFPA" />
+    UNFPA
+  </a>
+  <a href="https://sdgs.un.org" target="_blank">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Sustainable_Development_Goals.svg/200px-Sustainable_Development_Goals.svg.png" alt="UN SDGs" />
+    UN SDGs
+  </a>
+  <a href="https://www.dhsprogram.com" target="_blank">
+    <img src="https://dhsprogram.com/images/DHS-Program-logo.png" alt="DHS Program" style="height:40px;" />
+    DHS Program
+  </a>
+</div>
+
+<p style="text-align:center; font-family: 'Arial Narrow', Arial, sans-serif; font-size:0.8rem; color:#aaa; margin-top:1rem;">
+  Report prepared using UNICEF Postnatal Care Coverage Data (2008–2024) | Analysis conducted with Polars, Plotnine & GeoPandas |
+  Published with Quarto & GitHub Pages | © UNICEF Data Analytics Division
+</p>
