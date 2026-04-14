@@ -10,13 +10,14 @@ format:
     embed-resources: true
     toc: true
     toc-location: left
+    toc-depth: 3
     code-fold: true
     smooth-scroll: true
   
+    grid:
+      sidebar-width: 150px     # navigation sidebar
+      margin-width: 0px      # TOC width
+      body-width: 900px
+      gutter-width: 3.5rem
 
-grid:
-      sidebar-width: 220px
-      body-width: 880px
-      margin-width: 260px
-      gutter-width: 1.25rem
-
+    css: styles.css
