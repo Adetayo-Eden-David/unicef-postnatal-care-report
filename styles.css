@@ -604,3 +604,14 @@ main.content li,
     overflow-x: hidden;
   }
 }
+
+/* Hard guard against TOC overlap */
+#quarto-margin-sidebar {
+  max-width: 220px;
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+
+main.content {
+  max-width: 880px;
+}
