@@ -12,3 +12,11 @@ format:
     toc-location: left
     code-fold: true
     smooth-scroll: true
+  
+
+grid:
+      sidebar-width: 220px
+      body-width: 880px
+      margin-width: 260px
+      gutter-width: 1.25rem
+
