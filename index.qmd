@@ -24,7 +24,7 @@ format:
 execute:
   warning: false
   message: false
-  echo: true
+  echo: false
 ---
 
 ```{python}
@@ -191,8 +191,7 @@ h3 {
 #TOC {
   background-color: var(--unicef-pink-bg);
   border: 1px solid var(--unicef-pink-mid);
-  border-radius: 6px;
-  padding: 1rem;
+  
 }
 
 #TOC .toc-title {
@@ -210,10 +209,6 @@ h3 {
 #TOC a:hover {
   color: var(--unicef-accent);
   text-decoration: underline;
-}
-
-#TOC li::before {
-  content: "👶 ";
 }
 
 /* SDG sub-header banner */
@@ -347,7 +342,6 @@ h3 {
   content: "🩺 ";
 }
 </style>
-
 
 ## 🩺 Introduction {#introduction}
 

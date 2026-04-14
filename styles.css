@@ -5,6 +5,11 @@
    Body: Arial Narrow
    ============================================================ */
 
+/* ============================================================
+   UNICEF Postnatal Care Report — FINAL CLEAN STYLES
+   SAFE for Quarto left-sidebar TOC
+   ============================================================ */
+
 @import url('https://fonts.googleapis.com/css2?family=Copperplate+Gothic+Bold&display=swap');
 
 :root {
@@ -12,63 +17,74 @@
   --unicef-pink-light: #FFE4F0;
   --unicef-pink-mid: #FFB3D1;
   --unicef-pink-bg: #FFF0F7;
-  --unicef-dark: #1a1a2e;
   --unicef-text: #333344;
   --unicef-accent: #E6005C;
 }
 
-/* ── Base ── */
+/* =========================
+   BASE
+   ========================= */
+
 body {
-  font-family: 'Arial Narrow', Arial, sans-serif !important;
+  font-family: 'Arial Narrow', Arial, sans-serif;
   color: var(--unicef-text);
   background-color: #ffffff;
   line-height: 1.75;
   font-size: 16px;
 }
 
-/* ── Headings ── */
+/* =========================
+   HEADINGS
+   ========================= */
+
 h1, h2, h3, h4, h5, h6,
 .quarto-title h1,
 .quarto-title-block .title {
-  font-family: 'Copperplate Gothic Bold', 'Copperplate', 'Copperplate Gothic Light', Georgia, serif !important;
-  color: var(--unicef-fuchsia) !important;
+  font-family: 'Copperplate Gothic Bold', Georgia, serif;
+  color: var(--unicef-fuchsia);
   letter-spacing: 0.03em;
 }
 
-h1 { font-size: 2.1rem; border-bottom: 3px solid var(--unicef-fuchsia); padding-bottom: 0.5rem; }
-h2 { font-size: 1.45rem; margin-top: 2.5rem; border-left: 5px solid var(--unicef-fuchsia); padding-left: 0.8rem; }
-h3 { font-size: 1.15rem; color: #990044 !important; }
+h1 {
+  font-size: 2.1rem;
+  border-bottom: 3px solid var(--unicef-fuchsia);
+  padding-bottom: 0.5rem;
+}
 
-/* ── Table of Contents ── */
-#TOC, nav#TOC {
-  background-color: var(--unicef-pink-bg) !important;
-  border: 1px solid var(--unicef-pink-mid) !important;
-  border-radius: 10px;
-  padding: 1rem 1.2rem !important;
+h2 {
+  font-size: 1.45rem;
+  margin-top: 2.5rem;
+  border-left: 5px solid var(--unicef-fuchsia);
+  padding-left: 0.8rem;
+}
+
+h3 {
+  font-size: 1.15rem;
+  color: #990044;
+}
+
+/* =========================
+   LEFT SIDEBAR TOC — APPEARANCE ONLY
+   (NO WIDTH, NO POSITION)
+   ========================= */
+
+.quarto-toc {
+  background-color: var(--unicef-pink-bg);
+  border: 1px solid var(--unicef-pink-mid);
+  border-radius: 6px;
+  padding: 1rem;
   font-family: 'Arial Narrow', Arial, sans-serif;
 }
 
-/* =========================================================
-   HARD RESET: TABLE OF CONTENTS (LEFT-BODY MODE)
-   ========================================================= */
-
-/* Layout grid for left-body TOC */
-.quarto-toc {
-  max-width: 320px;
-  padding-right: 1.25rem;
-}
-
-/* Prevent compression */
 .quarto-toc ul {
-  padding-left: 0.6rem;
+  list-style: none;
+  padding-left: 0;
 }
 
 .quarto-toc li {
   margin: 0.6rem 0;
-  line-height: 1.45;
 }
 
-/* Links */
 .quarto-toc a {
   display: block;
   padding: 4px 6px;
@@ -78,55 +94,34 @@ h3 { font-size: 1.15rem; color: #990044 !important; }
   text-transform: uppercase;
 }
 
-/* Active section highlight */
-.quarto-toc a.active {
-  background: #FDE2EA;
-  font-weight: 800;
-}
-
-/* Hover */
 .quarto-toc a:hover {
   background: #FFE3F0;
   text-decoration: none;
 }
 
-/* ===== ICON CONTROL: EXACTLY ONE BABY ICON ===== */
+.quarto-toc a.active {
+  background: #FDE2EA;
+  font-weight: 800;
+}
 
-/* Remove all inherited pseudo-icons */
+/* ✅ HARD STOP: NO ICONS IN TOC */
 .quarto-toc a::before,
-.quarto-toc a::after {
+.quarto-toc a::after,
+.quarto-toc li::before,
+.quarto-toc li::after,
+#TOC::before,
+#TOC::after,
+#TOC svg,
+#TOC img,
+#TOC i {
   content: none !important;
+  display: none !important;
 }
 
-/* Add ONE baby icon */
-.quarto-toc li > a::before {
-  content: "👶 ";
-}
+/* =========================
+   STAT GRID
+   ========================= */
 
-/* Ensure no chart/stethoscope icons leak */
-.chart-note::before {
-  content: none !important;
-}
-
-/* ── SDG Banner ── */
-.sdg-banner {
-  background: linear-gradient(135deg, #CC0066 0%, #FF4499 100%);
-  color: white;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  margin: 1.5rem 0;
-  font-family: 'Arial Narrow', Arial, sans-serif;
-  font-size: 1.03rem;
-  box-shadow: 0 4px 14px rgba(204,0,102,0.35);
-}
-
-.sdg-banner a {
-  color: #FFE4F0;
-  font-weight: bold;
-  text-decoration: underline;
-}
-
-/* ── Stat grid ── */
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
@@ -135,155 +130,82 @@ h3 { font-size: 1.15rem; color: #990044 !important; }
 }
 
 .stat-box {
-  background: linear-gradient(145deg, var(--unicef-pink-light) 0%, #ffffff 100%);
+  background: linear-gradient(145deg, var(--unicef-pink-light), #ffffff);
   border: 2px solid var(--unicef-pink-mid);
   border-radius: 10px;
-  padding: 1.2rem 1rem;
+  padding: 1.2rem;
   text-align: center;
   box-shadow: 0 2px 8px rgba(204,0,102,0.12);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.stat-box:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(204,0,102,0.22);
 }
 
 .stat-number {
-  font-family: 'Copperplate Gothic Bold', serif !important;
+  font-family: 'Copperplate Gothic Bold', serif;
   font-size: 2.1rem;
   color: var(--unicef-fuchsia);
-  display: block;
-  line-height: 1.1;
 }
 
 .stat-label {
-  font-family: 'Arial Narrow', Arial, sans-serif;
   font-size: 0.88rem;
   color: #555;
-  margin-top: 0.5rem;
-  line-height: 1.4;
 }
 
-/* ── Chart captions & interpretations ── */
+/* =========================
+   CHART TEXT
+   ========================= */
+
 .chart-caption {
   font-style: italic;
-  color: #666;
   font-size: 0.94rem;
-  margin: 0.6rem 0 0.4rem 0;
+  color: #666;
   border-left: 3px solid var(--unicef-pink-mid);
   padding-left: 0.8rem;
 }
 
 .chart-interpretation {
   background-color: var(--unicef-pink-bg);
-  border-radius: 8px;
-  padding: 1.1rem 1.3rem;
-  margin: 0.8rem 0 2.2rem 0;
-  font-size: 0.97rem;
-  line-height: 1.75;
-  border: 1px solid var(--unicef-pink-mid);
-  color: var(--unicef-text);
-}
-
-/* ── Data notes collapsible ── */
-.data-notes-box {
-  background-color: var(--unicef-pink-light);
   border: 1px solid var(--unicef-pink-mid);
   border-radius: 8px;
-  padding: 1.2rem 1.5rem;
-  margin-top: 1rem;
-  font-size: 0.95rem;
+  padding: 1.1rem;
+  margin: 1rem 0 2rem;
 }
 
-.data-notes-box h3 {
-  margin-top: 1rem;
-}
+/* =========================
+   COLLAPSIBLE NOTES
+   ========================= */
 
 details > summary {
-  font-family: 'Copperplate Gothic Bold', serif !important;
-  color: var(--unicef-fuchsia) !important;
-  font-size: 1.05rem;
-  cursor: pointer;
-  padding: 0.8rem 1rem;
+  font-family: 'Copperplate Gothic Bold', serif;
+  color: var(--unicef-fuchsia);
   background-color: var(--unicef-pink-light);
-  border-radius: 6px;
   border: 1px solid var(--unicef-pink-mid);
-  list-style: none;
-  user-select: none;
+  border-radius: 6px;
+  padding: 0.8rem 1rem;
+  cursor: pointer;
 }
 
-details > summary:hover {
-  background-color: var(--unicef-pink-mid);
-}
+/* =========================
+   FOOTER LOGOS
+   ========================= */
 
-details[open] > summary {
-  border-radius: 6px 6px 0 0;
-  border-bottom: none;
-}
-
-/* ── Logo footer ── */
 .logo-footer {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 2.5rem;
-  flex-wrap: wrap;
+  gap: 2rem;
   padding: 1.8rem;
   background-color: var(--unicef-pink-bg);
   border-top: 3px solid var(--unicef-pink-mid);
-  border-radius: 10px;
   margin-top: 3rem;
-}
-
-.logo-footer a {
-  text-decoration: none;
-  color: var(--unicef-fuchsia);
-  font-family: 'Copperplate Gothic Bold', serif;
-  font-size: 0.82rem;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  transition: transform 0.2s;
-}
-
-.logo-footer a:hover {
-  transform: scale(1.07);
-  color: var(--unicef-accent);
 }
 
 .logo-footer img {
   height: 48px;
-  width: auto;
   object-fit: contain;
 }
 
-/* ── Code blocks ── */
-pre.sourceCode {
-  background-color: #fff5fa !important;
-  border: 1px solid var(--unicef-pink-mid) !important;
-  border-radius: 6px;
-}
+/* =========================
+   LINKS, HR, CODE
+   ========================= */
 
-.code-fold-btn {
-  color: var(--unicef-fuchsia) !important;
-}
-
-/* ── Quarto callouts ── */
-.callout {
-  border-left-color: var(--unicef-fuchsia) !important;
-}
-
-/* ── Horizontal rules ── */
-hr {
-  border: none;
-  border-top: 2px solid var(--unicef-pink-mid);
-  margin: 2rem 0;
-}
-
-/* ── Links ── */
 a {
   color: var(--unicef-fuchsia);
 }
@@ -292,326 +214,55 @@ a:hover {
   color: var(--unicef-accent);
 }
 
-/* ── Figure captions ── */
-.quarto-figure-caption, figcaption {
-  font-family: 'Arial Narrow', Arial, sans-serif;
-  font-size: 0.88rem;
-  color: #777;
-  font-style: italic;
-  text-align: center;
+hr {
+  border-top: 2px solid var(--unicef-pink-mid);
 }
 
-/* ── Page title block ── */
-.quarto-title-block {
-  border-bottom: 3px solid var(--unicef-fuchsia);
-  padding-bottom: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.quarto-title-meta-contents {
-  font-family: 'Arial Narrow', Arial, sans-serif;
-  font-size: 0.9rem;
-}
-
-/* ── Responsive ── */
-@media (max-width: 768px) {
-  .stat-grid { grid-template-columns: repeat(2, 1fr); }
-  .logo-footer { gap: 1.5rem; }
-  .logo-footer img { height: 36px; }
-}
-/* =========================
-   TOC: spacing + icons + active highlight
-   ========================= */
-
-/* Highlight current TOC item on scroll (Quarto uses .active) */
-#TOC a.active {
-  color: #C71585 !important;
-  background: #FDE2EA;
-  border-radius: 8px;
-  padding: 2px 6px;
-  font-weight: 800;
+pre.sourceCode {
+  background-color: #fff5fa;
+  border: 1px solid var(--unicef-pink-mid);
+  border-radius: 6px;
 }
 
 /* =========================
-   Layout: add breathing room between TOC (left) and main body
+   TEXT ALIGNMENT
    ========================= */
 
-/* Quarto main content area spacing */
-main.content { padding-left: 1.75rem; }
-
-/* Larger screens: slightly more space */
-@media (min-width: 992px){
-  main.content { padding-left: 2.25rem; }
-}
-/* ===== TOC spacing (fix squashed TOC) ===== */
-#TOC ul { padding-left: 1.1rem; }
-#TOC li { margin: 0.45rem 0; line-height: 1.35; }
-
-/* ===== TOC width + content spacing ===== */
-@media (min-width: 992px){
-  /* widen sidebar TOC area */
-  #quarto-sidebar, #quarto-margin-sidebar { width: 320px !important; }
-  /* push main content right a bit */
-  main.content { padding-left: 2.25rem !important; }
-}
-
-/* ===== TOC icons: ensure ONLY one baby icon per item ===== */
-/* remove any icon that might be coming from the toc title or other rules */
-#TOC::before { content: none !important; }
-
-/* add exactly one baby icon before each TOC link */
-#TOC li > a::before { content: "👶 "; }
-
-/* prevent stethoscope icon from appearing inside TOC */
-#TOC .chart-note::before,
-#TOC a::before { /* keep baby only; no other pseudo content should override */
-  /* do not add anything else here */
-}
-
-/* highlight current TOC item on scroll */
-#TOC a.active{
-  background: #FDE2EA;
-  border-radius: 8px;
-  padding: 2px 6px;
-  font-weight: 800;
-}
-``
-/* =========================
-   TOC layout & spacing
-   ========================= */
-
-/* Expand TOC width */
-@media (min-width: 992px){
-  #quarto-sidebar,
-  #quarto-margin-sidebar {
-    width: 320px !important;
-  }
-
-  main.content {
-    padding-left: 2.25rem !important;
-  }
-}
-
-/* Improve TOC item spacing */
-#TOC ul { padding-left: 1.1rem; }
-#TOC li { margin: 0.45rem 0; line-height: 1.35; }
-
-/* =========================
-   TOC icons — EXACTLY ONE
-   ========================= */
-
-/* Remove any icon coming from toc-title or other rules */
-#TOC::before { content: none !important; }
-
-/* Add ONE baby icon per TOC item */
-#TOC li > a::before { content: "👶 "; }
-
-/* Prevent stethoscope or chart icons leaking into TOC */
-#TOC .chart-note::before,
-#TOC a::after {
-  content: none !important;
-}
-
-/* Active section highlight */
-#TOC a.active {
-  background: #FDE2EA;
-  border-radius: 8px;
-  padding: 2px 6px;
-  font-weight: 800;
-}
-/* =========================================================
-   FINAL OVERRIDE: REMOVE ALL ICONS FROM TABLE OF CONTENTS
-   ========================================================= */
-
-/* Remove ALL pseudo-element icons from TOC links */
-#TOC a::before,
-#TOC a::after,
-#TOC li::before,
-#TOC li::after,
-#TOC::before,
-#TOC::after {
-  content: none !important;
-}
-
-/* Remove any icons injected via spans or inline SVGs */
-#TOC svg,
-#TOC i,
-#TOC img {
-  display: none !important;
-}
-
-/* Ensure clean spacing after icon removal */
-#TOC a {
-  padding-left: 0.25rem !important;
-}
-/* =========================================================
-   LAYOUT REFINEMENTS – FINAL POLISH
-   ========================================================= */
-
-/* ---------- 1. Widen TOC (left margin) ---------- */
-#TOC {
-  max-width: 340px !important;
-}
-
-#TOC ul {
-  padding-right: 0.75rem;
-}
-
-/* Prevent word crushing */
-#TOC a {
-  white-space: normal !important;
-  word-break: normal !important;
-  line-height: 1.35;
-}
-
-/* ---------- 2. Justify main content (Word-style) ---------- */
 main.content p,
 main.content li {
   text-align: justify;
   hyphens: auto;
 }
 
-/* Keep headings clean */
 main.content h1,
 main.content h2,
-main.content h3,
-main.content h4 {
+main.content h3 {
   text-align: left;
 }
 
-/* ---------- 4. Reduce oversized pink background sections ---------- */
-.section-pink,
-.bg-pink,
-.screen-inset-shaded,
-.screen-inset {
-  padding-top: 1.25rem !important;
-  padding-bottom: 1.25rem !important;
+/* =========================
+   MOBILE (APPEARANCE ONLY)
+   ========================= */
+
+@media (max-width: 768px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .logo-footer img {
+    height: 36px;
+  }
 }
 
-/* =========================================================
-   FULL JUSTIFICATION (WORD-STYLE)
-   ========================================================= */
-
-main.content p,
-main.content li,
-.chart-interpretation,
-.chart-caption {
-  text-align: justify;
-  hyphens: auto;
-}
-
-/* =========================================================
-   EXTRA-WIDE TOC (FINAL ADJUSTMENT)
-   ========================================================= */
-
-/* Widen the entire TOC column */
-#quarto-margin-sidebar {
-  width: 400px !important;
-  max-width: 400px !important;
-}
-
-/* Ensure TOC uses full column width */
+/* Reduce TOC sidebar width */
+.sidebar.toc-left,
+#quarto-sidebar,
 #TOC {
-  width: 100% !important;
-  max-width: 100% !important;
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
 }
-
-/* Improve readability for long headings */
-#TOC a {
-  white-space: normal !important;
-  word-break: normal !important;
-  line-height: 1.4;
-}
-/* =========================================================
-   MOBILE FIX: Prevent TOC from being cut off
-   ========================================================= */
-
-/* Apply only on small screens */
-@media (max-width: 768px) {
-
-  /* Make TOC scroll instead of cutting off */
-  #TOC {
-    max-height: 60vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 0.75rem;
-  }
-
-  /* Improve text wrapping on mobile */
-  #TOC a {
-    white-space: normal !important;
-    word-break: break-word;
-    line-height: 1.4;
-  }
-}
-
-/* =========================================================
-   MOBILE RESET — PREVENT FULL PAGE COMPRESSION
-   ========================================================= */
-
-@media (max-width: 768px) {
-
-  /* Reset Quarto grid widths */
-  #quarto-margin-sidebar,
-  #quarto-content,
-  main.content {
-    width: auto !important;
-    max-width: 100% !important;
-  }
-
-  /* Remove any fixed column constraints */
-  .page-columns,
-  .column-page,
-  .column-screen {
-    width: auto !important;
-    max-width: 100% !important;
-  }
-
-  /* Ensure normal text scaling */
-  html, body {
-    font-size: 100% !important;
-    zoom: 1 !important;
-  }
-
-  /* Prevent browser from shrinking layout */
-  body {
-    overflow-x: hidden;
-  }
-}
-
-/* =========================================================
-   MOBILE HARD RESET — STOP PAGE SHRINKING
-   ========================================================= */
-
-@media (max-width: 768px) {
-
-  /* Kill all fixed widths */
-  #quarto-margin-sidebar,
-  #quarto-content,
-  main.content,
-  .page-columns,
-  .column-page,
-  .column-screen {
-    width: auto !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-  }
-
-  /* Let mobile browser reflow normally */
-  html, body {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
-  }
-}
-
-/* Hard guard against TOC overlap */
-#quarto-margin-sidebar {
-  max-width: 220px;
-  box-sizing: border-box;
-  overflow-x: auto;
-}
-
-main.content {
-  max-width: 880px;
+/* Lower the TOC slightly from the top */
+.quarto-toc {
+  margin-top: 1.10rem;
 }
